@@ -1,0 +1,3993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPrice — Compare Total Costs, Find True Deals</title>
+  <meta name="description" content="A simple, transparent price comparison platform that calculates full costs including delivery and fees for agricultural and daily products.">
+
+  <!-- ==========================================================================
+       STYLESHEET (Pure Vanilla CSS)
+       Natural agricultural palette: Fresh greens, warm cream, crisp white.
+       Designed for high contrast, readability, and mobile responsiveness.
+       ========================================================================== -->
+  <style>
+    /* CSS Variables for consistent theming and easy customization */
+    :root {
+      /* Palette */
+      --primary-dark: #1b4d24;      /* Deep forest green for headings and primary accents */
+      --primary: #2d7a3e;           /* Rich agricultural green */
+      --primary-light: #48a05c;     /* Fresh leaf green for active states */
+      --primary-tint: #eaf5ec;      /* Pale mint/sage background tint */
+      --primary-border: #cbe3cf;    /* Soft green border */
+
+      --accent-gold: #c98a1c;       /* Warm harvest gold for savings and alerts */
+      --accent-gold-bg: #fdf6e7;    /* Cream gold background */
+
+      --cream-bg: #faf7f2;          /* Soft warm cream body background */
+      --card-bg: #ffffff;           /* Clean white for content cards */
+      --card-border: #e8e3d9;       /* Subtle warm border */
+
+      --text-main: #1f2a22;         /* High-contrast dark charcoal for primary reading */
+      --text-muted: #536458;        /* Soft earthy gray-green for subtext */
+      --text-light: #7c8e81;        /* Light muted text */
+
+      --best-deal-bg: #e6f6ea;      /* Highlight background for lowest total cost */
+      --best-deal-border: #2d7a3e;  /* Highlight border */
+      --danger-color: #c0392b;      /* High price warning */
+
+      /* Typography & Sizing */
+      --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+
+      /* Elevation shadows */
+      --shadow-sm: 0 2px 6px rgba(27, 77, 36, 0.06);
+      --shadow-md: 0 6px 18px rgba(27, 77, 36, 0.08);
+      --shadow-lg: 0 12px 30px rgba(27, 77, 36, 0.12);
+
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.3s ease;
+    }
+
+    /* Accessibility Font Size Toggle (Supports rural and senior users) */
+    body.large-text-mode {
+      font-size: 112%;
+    }
+
+    /* Base Reset & Typography */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-family: var(--font-stack);
+      color: var(--text-main);
+      background-color: var(--cream-bg);
+      line-height: 1.6;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Standardized Container */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Visually Hidden for accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ==========================================================================
+       TOP ANNOUNCEMENT & ACCESSIBILITY BAR
+       ========================================================================== */
+    .top-bar {
+      background-color: var(--primary-dark);
+      color: #e8f5e9;
+      font-size: 0.88rem;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .top-bar-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .top-bar-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+    }
+
+    .top-bar-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .text-size-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .text-size-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ==========================================================================
+       HEADER & NAVIGATION
+       ========================================================================== */
+    .site-header {
+      background-color: #ffffff;
+      border-bottom: 2px solid var(--primary-border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+    }
+
+    /* Brand Logo */
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--primary-dark);
+      font-weight: 800;
+      font-size: 1.45rem;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-logo svg {
+      width: 36px;
+      height: 36px;
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .brand-tagline {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+    }
+
+    /* Navigation Links */
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      list-style: none;
+    }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.98rem;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      transition: color var(--transition-fast), background-color var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--primary);
+      background-color: var(--primary-tint);
+    }
+
+    /* Primary Nav Action Button */
+    .btn-nav-compare {
+      background-color: var(--primary);
+      color: #ffffff;
+      padding: 10px 22px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 0.96rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid var(--primary);
+      box-shadow: 0 3px 8px rgba(45, 122, 62, 0.25);
+      transition: background var(--transition-fast), transform var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .btn-nav-compare:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    /* Mobile Hamburger Button */
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--primary-dark);
+      font-size: 1.8rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ==========================================================================
+       HERO SECTION
+       ========================================================================== */
+    .hero-section {
+      background: linear-gradient(180deg, #ffffff 0%, var(--primary-tint) 100%);
+      padding: 56px 0 48px 0;
+      border-bottom: 1px solid var(--primary-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .hero-content h1 {
+      font-size: 2.7rem;
+      line-height: 1.18;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 18px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-content h1 span {
+      color: var(--primary);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      max-width: 580px;
+    }
+
+    /* Search Bar Component */
+    .hero-search-box {
+      background: #ffffff;
+      padding: 8px;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--primary);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+      transition: box-shadow var(--transition-fast);
+    }
+
+    .hero-search-box:focus-within {
+      box-shadow: 0 0 0 4px rgba(72, 160, 92, 0.25);
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      min-width: 240px;
+    }
+
+    .search-input-wrapper svg {
+      width: 22px;
+      height: 22px;
+      color: var(--text-light);
+      flex-shrink: 0;
+    }
+
+    .hero-search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 1.05rem;
+      font-family: inherit;
+      color: var(--text-main);
+      background: transparent;
+    }
+
+    .hero-search-input::placeholder {
+      color: var(--text-light);
+    }
+
+    .btn-search {
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 14px 26px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background var(--transition-fast), transform var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn-search:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .hero-secondary-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .btn-upload-screenshot {
+      background-color: #ffffff;
+      color: var(--primary-dark);
+      border: 2px solid var(--primary-border);
+      padding: 10px 20px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-upload-screenshot:hover {
+      border-color: var(--primary);
+      background-color: var(--primary-tint);
+      color: var(--primary);
+    }
+
+    .btn-clear-search {
+      background: transparent;
+      border: 1px dashed var(--text-light);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none; /* Shown dynamically via JS */
+    }
+
+    .btn-clear-search:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-main);
+    }
+
+    /* Trust Chips */
+    .trust-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .trust-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      border: 1px solid var(--primary-border);
+    }
+
+    .trust-chip svg {
+      color: var(--primary);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Hero Agricultural Illustration (Self-contained SVG) */
+    .hero-illustration-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-art-card {
+      background: #ffffff;
+      border: 3px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .hero-art-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .hero-floating-badge {
+      position: absolute;
+      bottom: -15px;
+      right: 15px;
+      background: var(--primary-dark);
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid #ffffff;
+    }
+
+    /* ==========================================================================
+       SECTION HEADERS
+       ========================================================================== */
+    .section-padding {
+      padding: 60px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 38px;
+    }
+
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--primary-tint);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 5px 14px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 12px;
+      border: 1px solid var(--primary-border);
+    }
+
+    .section-title {
+      font-size: 2.15rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .section-description {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 660px;
+      margin: 0 auto;
+    }
+
+    /* ==========================================================================
+       POPULAR CATEGORIES
+       ========================================================================== */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+    }
+
+    .category-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 22px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      outline: none;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .category-card.active {
+      border-color: var(--primary);
+      background-color: var(--primary-tint);
+      box-shadow: 0 4px 12px rgba(45, 122, 62, 0.15);
+    }
+
+    .category-icon-wrapper {
+      width: 58px;
+      height: 58px;
+      background: var(--cream-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--card-border);
+      transition: background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .category-card:hover .category-icon-wrapper,
+    .category-card.active .category-icon-wrapper {
+      background: #ffffff;
+      transform: scale(1.08);
+      border-color: var(--primary);
+    }
+
+    .category-icon-wrapper svg {
+      width: 28px;
+      height: 28px;
+      color: var(--primary);
+    }
+
+    .category-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .category-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Category Filter Chip Bar */
+    .filter-chip-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .filter-chip {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* ==========================================================================
+       TRENDING DEALS & PRODUCTS
+       ========================================================================== */
+    .products-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .results-count-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .demo-data-note {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      background: var(--cream-bg);
+      border: 1px dashed var(--primary-border);
+      padding: 4px 12px;
+      border-radius: var(--radius-pill);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    /* Product Card */
+    .product-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+
+    /* Visual Product Header with SVG Art */
+    .product-visual {
+      background: linear-gradient(135deg, #f7faf7 0%, var(--primary-tint) 100%);
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--card-border);
+      padding: 20px;
+    }
+
+    .product-svg-icon {
+      width: 100px;
+      height: 100px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
+    }
+
+    .discount-pill {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: var(--accent-gold);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.3px;
+    }
+
+    .category-pill {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--primary-dark);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--primary-border);
+    }
+
+    .product-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .product-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .product-description {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      flex: 1;
+    }
+
+    .product-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 18px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--card-border);
+    }
+
+    .price-block {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .price-label {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .price-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+    }
+
+    .sellers-count-badge {
+      font-size: 0.82rem;
+      color: var(--text-main);
+      background: var(--cream-bg);
+      border: 1px solid var(--card-border);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Product Action Buttons */
+    .product-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-card-compare {
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-card-compare:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-card-history {
+      background-color: transparent;
+      color: var(--text-main);
+      border: 1px solid var(--primary-border);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-card-history:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: var(--primary-tint);
+    }
+
+    /* Empty state */
+    .no-results-box {
+      grid-column: 1 / -1;
+      text-align: center;
+      background: #ffffff;
+      border: 2px dashed var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 48px 20px;
+    }
+
+    .no-results-box h3 {
+      font-size: 1.3rem;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    /* ==========================================================================
+       PRICE COMPARISON PREVIEW SECTION
+       ========================================================================== */
+    .compare-section {
+      background-color: #ffffff;
+      border-top: 1px solid var(--primary-border);
+      border-bottom: 1px solid var(--primary-border);
+    }
+
+    .compare-card-container {
+      background: var(--cream-bg);
+      border: 2px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .compare-controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      background: #ffffff;
+      padding: 18px 24px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--primary-border);
+    }
+
+    .compare-product-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .compare-product-picker label {
+      font-weight: 700;
+      font-size: 0.98rem;
+      color: var(--primary-dark);
+    }
+
+    .compare-select {
+      background: var(--cream-bg);
+      border: 2px solid var(--primary);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      outline: none;
+      min-width: 280px;
+    }
+
+    /* Formula Explanation Banner */
+    .formula-banner {
+      background: var(--primary-tint);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      font-size: 0.94rem;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .formula-banner code {
+      background: #ffffff;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-family: monospace;
+      border: 1px solid var(--primary-border);
+      color: var(--primary-dark);
+    }
+
+    /* Responsive Comparison Table */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--card-border);
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .comparison-table th {
+      background-color: #f1f6f2;
+      color: var(--primary-dark);
+      font-weight: 700;
+      padding: 16px;
+      border-bottom: 2px solid var(--primary-border);
+      white-space: nowrap;
+    }
+
+    .comparison-table td {
+      padding: 16px;
+      border-bottom: 1px solid #eef2ee;
+      vertical-align: middle;
+    }
+
+    .comparison-table tr:hover td {
+      background-color: #fbfdfb;
+    }
+
+    /* Highlight Lowest Total Cost Row */
+    .row-best-price td {
+      background-color: var(--best-deal-bg) !important;
+      font-weight: 600;
+    }
+
+    .best-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+    }
+
+    .seller-title-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .seller-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-tint);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 1px solid var(--primary-border);
+      flex-shrink: 0;
+    }
+
+    .cost-total-cell {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .row-best-price .cost-total-cell {
+      color: var(--primary);
+    }
+
+    .btn-select-seller {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn-select-seller:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Key Finding Insight Card */
+    .comparison-insight-card {
+      margin-top: 20px;
+      background: #ffffff;
+      border: 1px solid var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .insight-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-gold-bg);
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .insight-text {
+      font-size: 0.92rem;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       PRICE HISTORY & RECOMMENDATIONS
+       ========================================================================== */
+    .history-card {
+      background: #ffffff;
+      border: 2px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .history-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .stat-box {
+      background: var(--cream-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .stat-box.highlight-low {
+      background: var(--primary-tint);
+      border-color: var(--primary);
+    }
+
+    .stat-box.highlight-low .stat-val {
+      color: var(--primary);
+    }
+
+    /* Recommendation Box */
+    .recommendation-box {
+      border-radius: var(--radius-md);
+      padding: 22px 24px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      border-left: 6px solid;
+    }
+
+    .rec-buy-now {
+      background: #eaf8ed;
+      border-color: var(--primary);
+      color: var(--primary-dark);
+    }
+
+    .rec-wait {
+      background: #fdf5e8;
+      border-color: var(--accent-gold);
+      color: #734c03;
+    }
+
+    .rec-fair {
+      background: #f0f7f4;
+      border-color: #4a7c6d;
+      color: #1f3d35;
+    }
+
+    .rec-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .rec-content h4 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .rec-content p {
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .rec-disclaimer {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.82rem;
+      opacity: 0.85;
+      font-style: italic;
+    }
+
+    /* Pure Vanilla JS SVG Chart Container */
+    .chart-container-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 24px 16px;
+      position: relative;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 0 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chart-header h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 280px;
+      display: block;
+      overflow: visible;
+    }
+
+    /* Chart tooltips and interaction points */
+    .chart-point {
+      cursor: pointer;
+      transition: transform var(--transition-fast), r var(--transition-fast);
+    }
+
+    .chart-point:hover {
+      r: 8px;
+    }
+
+    /* ==========================================================================
+       SCREENSHOT UPLOAD SECTION
+       ========================================================================== */
+    .upload-card {
+      background: #ffffff;
+      border: 2px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 36px 30px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .upload-dropzone {
+      border: 3px dashed var(--primary);
+      background: var(--cream-bg);
+      border-radius: var(--radius-md);
+      padding: 44px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast);
+      position: relative;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.drag-active {
+      background: var(--primary-tint);
+      border-color: var(--primary-dark);
+    }
+
+    .upload-icon-circle {
+      width: 72px;
+      height: 72px;
+      background: #ffffff;
+      border-radius: 50%;
+      margin: 0 auto 16px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--primary-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .upload-icon-circle svg {
+      width: 36px;
+      height: 36px;
+      color: var(--primary);
+    }
+
+    .upload-dropzone h3 {
+      font-size: 1.3rem;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .upload-dropzone p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    .btn-browse {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 10px 24px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+    }
+
+    /* Sample screenshot quick buttons for zero-friction demo */
+    .sample-screenshots-row {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .sample-screenshots-row span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .btn-sample-shot {
+      background: #ffffff;
+      border: 1px solid var(--primary-border);
+      color: var(--primary-dark);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-sample-shot:hover {
+      background: var(--primary-tint);
+      border-color: var(--primary);
+    }
+
+    /* Preview & Manual Match Container */
+    .screenshot-preview-container {
+      margin-top: 28px;
+      display: none; /* Displayed via JS when an image is loaded */
+      background: var(--cream-bg);
+      border: 1px solid var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .preview-image-box {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .preview-image-box img {
+      max-width: 100%;
+      max-height: 260px;
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .preview-details h4 {
+      font-size: 1.25rem;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+
+    .tech-limitation-box {
+      background: #ffffff;
+      border-left: 4px solid var(--accent-gold);
+      padding: 14px 18px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.88rem;
+      color: #614002;
+      margin: 14px 0 20px 0;
+      line-height: 1.5;
+    }
+
+    .match-selector-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .match-selector-group label {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary-dark);
+    }
+
+    .match-select {
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.98rem;
+      font-family: inherit;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .btn-identify-confirm {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 0.98rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background var(--transition-fast);
+    }
+
+    .btn-identify-confirm:hover {
+      background: var(--primary-dark);
+    }
+
+    /* ==========================================================================
+       HOW IT WORKS SECTION
+       ========================================================================== */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
+
+    .step-card {
+      background: #ffffff;
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 34px 24px;
+      text-align: center;
+      position: relative;
+      transition: transform var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .step-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: #ffffff;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px auto;
+      border: 4px solid var(--primary-tint);
+    }
+
+    .step-icon-svg {
+      width: 52px;
+      height: 52px;
+      color: var(--primary-light);
+      margin-bottom: 16px;
+    }
+
+    .step-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ==========================================================================
+       TRUST AND SAFETY SECTION
+       ========================================================================== */
+    .trust-section {
+      background: linear-gradient(180deg, var(--cream-bg) 0%, var(--primary-tint) 100%);
+      border-top: 1px solid var(--primary-border);
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .trust-card {
+      background: #ffffff;
+      border: 1px solid var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 26px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .trust-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--primary-tint);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trust-card h4 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      line-height: 1.35;
+    }
+
+    .trust-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       FOOTER
+       ========================================================================== */
+    .site-footer {
+      background-color: var(--primary-dark);
+      color: #e2ede5;
+      padding: 60px 0 24px 0;
+      margin-top: auto;
+      border-top: 4px solid var(--primary);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      gap: 40px;
+      margin-bottom: 44px;
+    }
+
+    .footer-brand .brand-logo {
+      color: #ffffff;
+      margin-bottom: 14px;
+    }
+
+    .footer-brand .brand-logo svg {
+      color: #a3e0b2;
+    }
+
+    .footer-desc {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #bfd9c4;
+      margin-bottom: 18px;
+    }
+
+    .footer-col h5 {
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      position: relative;
+      padding-bottom: 8px;
+    }
+
+    .footer-col h5::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 28px;
+      height: 2px;
+      background: #84cc97;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-links a {
+      color: #bfd9c4;
+      text-decoration: none;
+      font-size: 0.92rem;
+      transition: color var(--transition-fast);
+      display: inline-block;
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+      transform: translateX(3px);
+    }
+
+    .footer-notice {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-size: 0.84rem;
+      color: #d1e7d6;
+      line-height: 1.5;
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.86rem;
+      color: #a4c4ab;
+    }
+
+    /* ==========================================================================
+       MODALS & TOAST NOTIFICATION
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(18, 38, 23, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      transform: scale(0.95);
+      transition: transform var(--transition-normal);
+    }
+
+    .modal-backdrop.open .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--cream-bg);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition-fast);
+    }
+
+    .modal-close-btn:hover {
+      background: #e2e2e2;
+    }
+
+    .modal-box h3 {
+      font-size: 1.45rem;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+    }
+
+    .modal-box p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    /* Toast notification */
+    .toast-notice {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--primary-dark);
+      color: #ffffff;
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 0.94rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 3000;
+      transform: translateY(120%);
+      transition: transform var(--transition-normal);
+      border-left: 5px solid #85e498;
+    }
+
+    .toast-notice.show {
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       RESPONSIVE DESIGN BREAKPOINTS
+       ========================================================================== */
+    @media (max-width: 992px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 32px;
+      }
+
+      .hero-content h1 {
+        font-size: 2.2rem;
+      }
+
+      .hero-subtitle {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-search-box {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-secondary-actions,
+      .trust-chips-row {
+        justify-content: center;
+      }
+
+      .hero-illustration-wrapper {
+        order: -1;
+      }
+
+      .hero-art-card {
+        max-width: 360px;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-toggle {
+        display: block;
+      }
+
+      .nav-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 20px;
+        box-shadow: var(--shadow-md);
+        border-bottom: 2px solid var(--primary-border);
+        display: none;
+      }
+
+      .nav-menu.mobile-open {
+        display: flex;
+      }
+
+      .btn-nav-compare {
+        text-align: center;
+        justify-content: center;
+      }
+
+      .section-title {
+        font-size: 1.8rem;
+      }
+
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .compare-select {
+        width: 100%;
+        min-width: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       ACCESSIBILITY & TOP NOTIFICATION BAR
+       ========================================================================== -->
+  <div class="top-bar">
+    <div class="container top-bar-inner">
+      <div class="top-bar-badge">
+        <span>🌱</span>
+        <span>SmartPrice Demonstration Platform — 100% Offline & Transparent Total Cost Comparison</span>
+      </div>
+      <div class="top-bar-controls">
+        <button id="toggleTextSizeBtn" class="text-size-btn" title="Toggle larger text for easier reading">
+          <span>Aa</span> Large Text
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       NAVIGATION BAR
+       ========================================================================== -->
+  <header class="site-header">
+    <div class="container nav-container">
+      <!-- Leaf-inspired Logo -->
+      <a href="#home" class="brand-logo" aria-label="SmartPrice Homepage">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Leaf blade -->
+          <path d="M12 36C12 36 10 22 24 10C38 22 36 36 36 36C36 36 26 40 12 36Z" fill="#eaf5ec" stroke="#2d7a3e"/>
+          <!-- Central leaf vein -->
+          <path d="M24 10V38" stroke="#2d7a3e"/>
+          <!-- Small side veins -->
+          <path d="M24 18L18 23" stroke="#2d7a3e"/>
+          <path d="M24 24L30 29" stroke="#2d7a3e"/>
+          <path d="M24 30L17 34" stroke="#2d7a3e"/>
+        </svg>
+        <div>
+          <span>SmartPrice</span>
+          <span class="brand-tagline">Fair Total Price Comparison</span>
+        </div>
+      </a>
+
+      <!-- Mobile Navigation Hamburger Button -->
+      <button id="mobileMenuBtn" class="mobile-toggle" aria-label="Toggle navigation menu">
+        ☰
+      </button>
+
+      <!-- Navigation Links -->
+      <nav>
+        <ul id="navMenu" class="nav-menu">
+          <li><a href="#home" class="nav-link active">Home</a></li>
+          <li><a href="#compare" class="nav-link">Compare Prices</a></li>
+          <li><a href="#history" class="nav-link">Price History</a></li>
+          <li><a href="#upload" class="nav-link">Upload Screenshot</a></li>
+          <li><a href="#how-it-works" class="nav-link">About Us</a></li>
+          <li><a href="#compare" class="btn-nav-compare">Start Comparing ➔</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       HERO SECTION
+       ========================================================================== -->
+  <section id="home" class="hero-section">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <h1>Find the Best Price.<br><span>Save More Every Day.</span></h1>
+        <p class="hero-subtitle">
+          Compare prices from different sellers, track price changes, and discover smarter ways to shop. Simple, transparent, and made for everyone.
+        </p>
+
+        <!-- Search Bar -->
+        <div class="hero-search-box">
+          <div class="search-input-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="productSearchInput" 
+              class="hero-search-input" 
+              placeholder="Search for a product… (e.g. Rice Cooker, Seeds, Phone, Fertilizer)" 
+              aria-label="Search for a product"
+            >
+          </div>
+          <button id="searchBtn" class="btn-search">Compare Prices</button>
+        </div>
+
+        <!-- Secondary Actions & Search Reset -->
+        <div class="hero-secondary-actions">
+          <button id="heroUploadBtn" class="btn-upload-screenshot">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            Upload Product Screenshot
+          </button>
+          <button id="clearSearchBtn" class="btn-clear-search">✕ Reset Search</button>
+        </div>
+
+        <!-- Trust Messages -->
+        <div class="trust-chips-row">
+          <div class="trust-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+            </svg>
+            <span>Compare Total Costs</span>
+          </div>
+          <div class="trust-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+            <span>Track Price History</span>
+          </div>
+          <div class="trust-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+            <span>Shop Smarter</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agricultural Hero Illustration -->
+      <div class="hero-illustration-wrapper">
+        <div class="hero-art-card">
+          <svg class="hero-art-svg" viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky & Country Hills Background -->
+            <rect width="400" height="320" rx="14" fill="#F1F8EE"/>
+            <path d="M0 240C90 210 180 250 280 220C340 200 380 215 400 225V320H0V240Z" fill="#D6EDD8"/>
+            <path d="M0 260C120 235 240 280 400 250V320H0V260Z" fill="#B7DFBC"/>
+
+            <!-- Subtle Sun / Harvest Glow -->
+            <circle cx="330" cy="70" r="36" fill="#FCEAC0" opacity="0.8"/>
+
+            <!-- Crop & Plant Silhouettes -->
+            <path d="M40 240Q50 200 65 210Q50 220 40 240Z" fill="#2D7A3E"/>
+            <path d="M55 245Q70 190 85 205Q68 220 55 245Z" fill="#48A05C"/>
+            <path d="M340 250Q355 210 370 225Q350 235 340 250Z" fill="#2D7A3E"/>
+
+            <!-- Central Shopping Basket with Fresh Harvest / Agricultural Goods -->
+            <!-- Basket Body -->
+            <path d="M130 170L145 270H255L270 170H130Z" fill="#E8C382" stroke="#B08638" stroke-width="4"/>
+            <!-- Basket Weave Texture -->
+            <path d="M140 200H260M143 235H257" stroke="#9E7428" stroke-width="3" stroke-dasharray="8 6"/>
+            <path d="M170 170L175 270M200 170V270M230 170L225 270" stroke="#9E7428" stroke-width="2.5"/>
+            <!-- Basket Handle -->
+            <path d="M150 170C150 100 250 100 250 170" fill="none" stroke="#B08638" stroke-width="6" stroke-linecap="round"/>
+
+            <!-- Fresh Produce Inside Basket -->
+            <!-- Golden Wheat Stalk -->
+            <path d="M175 160L160 110" stroke="#C98A1C" stroke-width="4" stroke-linecap="round"/>
+            <ellipse cx="155" cy="115" rx="5" ry="10" transform="rotate(-25 155 115)" fill="#F9A825"/>
+            <ellipse cx="165" cy="125" rx="5" ry="10" transform="rotate(35 165 125)" fill="#F9A825"/>
+            <ellipse cx="160" cy="100" rx="5" ry="10" fill="#F9A825"/>
+
+            <!-- Vibrant Green Plant / Seedling -->
+            <path d="M225 165C225 130 205 120 205 120C205 120 240 125 235 165" fill="#48A05C"/>
+            <path d="M210 165C210 135 245 130 245 130C245 130 215 140 210 165" fill="#2D7A3E"/>
+
+            <!-- Price Tag Ribbon -->
+            <path d="M185 220L215 220L225 240L215 260L185 260L175 240Z" fill="#2D7A3E"/>
+            <circle cx="190" cy="240" r="3" fill="#FFFFFF"/>
+            <text x="198" y="244" fill="#FFFFFF" font-size="11" font-weight="bold" font-family="sans-serif">₹ BEST</text>
+          </svg>
+          <div class="hero-floating-badge">
+            <span>🌿</span> 100% Transparent Total Pricing
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       POPULAR PRODUCT CATEGORIES
+       ========================================================================== -->
+  <section id="categories" class="section-padding">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Browse by Department</span>
+        <h2 class="section-title">Popular Product Categories</h2>
+        <p class="section-description">
+          Click any category to instantly display matching items and compare current seller deals.
+        </p>
+      </div>
+
+      <!-- Category Cards Grid -->
+      <div class="categories-grid" id="categoryCardsContainer">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+
+      <!-- Quick Filter Bar -->
+      <div class="filter-chip-bar" id="categoryFilterChips">
+        <button class="filter-chip active" data-category="All">Show All Categories</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       TRENDING DEALS & SAMPLE PRODUCTS
+       ========================================================================== -->
+  <section id="trending" class="section-padding" style="background-color: #ffffff;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Marketplace Highlights</span>
+        <h2 class="section-title">Trending Deals</h2>
+        <p class="section-description">
+          Explore realistic sample products with lowest available seller rates. Select any item to view itemized fees or historical price charts.
+        </p>
+      </div>
+
+      <!-- Results Count & Demo Notice -->
+      <div class="products-status-row">
+        <div id="resultsCount" class="results-count-text">Showing All Products</div>
+        <div class="demo-data-note">
+          ℹ️ Realistic sample data shown for offline demonstration
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="productsGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       PRICE COMPARISON PREVIEW
+       ========================================================================== -->
+  <section id="compare" class="section-padding compare-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Accurate Full-Cost Calculation</span>
+        <h2 class="section-title">Price Comparison Preview</h2>
+        <p class="section-description">
+          Don't be fooled by cheap sticker prices that hide expensive delivery or packaging fees. We compute the exact bottom line.
+        </p>
+      </div>
+
+      <div class="compare-card-container">
+        <!-- Product Picker Bar -->
+        <div class="compare-controls-bar">
+          <div class="compare-product-picker">
+            <label for="compareProductSelect">Select Product to Compare:</label>
+            <select id="compareProductSelect" class="compare-select">
+              <!-- Populated via JavaScript -->
+            </select>
+          </div>
+          <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">
+            Sorting: Lowest Total Cost First (Best Deal)
+          </div>
+        </div>
+
+        <!-- Formula Banner -->
+        <div class="formula-banner">
+          <div>
+            <strong>Verified Calculation Formula:</strong><br>
+            <code>Total Cost = Product Price + Delivery Fee + Additional Charges − Applicable Discounts</code>
+          </div>
+        </div>
+
+        <!-- Responsive Comparison Table -->
+        <div class="table-responsive">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Seller Name & Trust</th>
+                <th>Base Price</th>
+                <th>Delivery Fee</th>
+                <th>Addtl. Charges</th>
+                <th>Discounts</th>
+                <th>Final Total Cost</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonTableBody">
+              <!-- Populated via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Insight Card -->
+        <div class="comparison-insight-card" id="comparisonInsightBox">
+          <div class="insight-icon">💡</div>
+          <div class="insight-text" id="comparisonInsightText">
+            Notice how the seller with the lowest advertised item price is not always the cheapest overall once delivery and handling are factored in!
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       PRICE HISTORY & SMART RECOMMENDATIONS
+       ========================================================================== -->
+  <section id="history" class="section-padding">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Historical Intelligence</span>
+        <h2 class="section-title">Price History & Smart Recommendations</h2>
+        <p class="section-description">
+          View price fluctuations over time and receive clear guidance on whether today is the best time to purchase or if you should wait.
+        </p>
+      </div>
+
+      <div class="history-card">
+        <!-- Product Selector for History -->
+        <div class="compare-controls-bar" style="margin-bottom: 24px;">
+          <div class="compare-product-picker">
+            <label for="historyProductSelect">Select Product Trend:</label>
+            <select id="historyProductSelect" class="compare-select">
+              <!-- Populated via JavaScript -->
+            </select>
+          </div>
+          <div id="historyTimeRangeLabel" style="font-size: 0.88rem; font-weight: 700; color: var(--primary);">
+            Showing Last 6 Months
+          </div>
+        </div>
+
+        <!-- Stats Overview Row -->
+        <div class="history-stats-grid">
+          <div class="stat-box highlight-low">
+            <span class="stat-label">Lowest Recorded Price</span>
+            <span class="stat-val" id="statLowestPrice">₹0</span>
+            <span style="font-size: 0.78rem; color: var(--primary);">Best historical deal</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Current Sample Price</span>
+            <span class="stat-val" id="statCurrentPrice">₹0</span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);" id="statPositionLabel">Position in range</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Highest Recorded Price</span>
+            <span class="stat-val" id="statHighestPrice" style="color: var(--danger-color);">₹0</span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Historical peak</span>
+          </div>
+        </div>
+
+        <!-- Recommendation Banner -->
+        <div id="recommendationBanner" class="recommendation-box rec-buy-now">
+          <div class="rec-icon" id="recIcon">🟢</div>
+          <div class="rec-content">
+            <h4 id="recTitle">Buy Now — The current price is near the historical low.</h4>
+            <p id="recDesc">
+              Our sample historical data indicates this product is currently priced at or near its lowest recording for the past 6 months.
+            </p>
+            <span class="rec-disclaimer">
+              * Note: Price trend recommendations are estimates derived from historical sample patterns, not binding financial guarantees.
+            </span>
+          </div>
+        </div>
+
+        <!-- SVG Line Chart (Drawn 100% by Vanilla JS) -->
+        <div class="chart-container-wrapper">
+          <div class="chart-header">
+            <h3 id="chartProductTitle">Price Trend (Past 6 Months)</h3>
+            <div class="chart-legend">
+              <span class="legend-item">
+                <span class="legend-dot" style="background: var(--primary);"></span> Actual Sample Price
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot" style="background: var(--accent-gold);"></span> Historical Range
+              </span>
+            </div>
+          </div>
+          <!-- The SVG element populated dynamically -->
+          <svg id="priceChartSvg" class="chart-svg" viewBox="0 0 800 280" preserveAspectRatio="none">
+            <!-- Chart rendered by JavaScript -->
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       SCREENSHOT UPLOAD SECTION
+       ========================================================================== -->
+  <section id="upload" class="section-padding" style="background-color: #ffffff;">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Visual Match Assistant</span>
+        <h2 class="section-title">Found a product in another shopping app?</h2>
+        <p class="section-description">
+          Upload a screenshot of the product page from any shopping app or website. We will help you preview it and match it against our database for total price comparison.
+        </p>
+      </div>
+
+      <div class="upload-card">
+        <!-- Dropzone / File Picker -->
+        <div class="upload-dropzone" id="uploadDropzone">
+          <div class="upload-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <h3>Select or Drop Product Screenshot</h3>
+          <p>
+            Supports PNG, JPG, and JPEG images saved from your phone or computer.
+          </p>
+          <input type="file" id="screenshotFileInput" class="file-input-hidden" accept="image/png, image/jpeg, image/jpg">
+          <button type="button" class="btn-browse" id="browseFileBtn">Browse Files on Device</button>
+        </div>
+
+        <!-- Sample Buttons to test immediately without having an image -->
+        <div class="sample-screenshots-row">
+          <span>Or test with a quick sample:</span>
+          <button class="btn-sample-shot" data-sample="irrigation">Sample Irrigation Deal</button>
+          <button class="btn-sample-shot" data-sample="rice">Sample Organic Rice Deal</button>
+          <button class="btn-sample-shot" data-sample="phone">Sample Rugged Phone Deal</button>
+        </div>
+
+        <!-- Screenshot Preview & Manual Match Area -->
+        <div class="screenshot-preview-container" id="screenshotPreviewBox">
+          <div class="preview-grid">
+            <div class="preview-image-box">
+              <img id="screenshotImgPreview" src="" alt="Selected Product Screenshot">
+              <div id="imageMetaText" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px;">
+                Image Preview
+              </div>
+            </div>
+            <div class="preview-details">
+              <h4>Screenshot Loaded Successfully</h4>
+
+              <!-- Honest Technical Explanation of AI Limitation -->
+              <div class="tech-limitation-box">
+                <strong>💡 Why Manual Confirmation is Used Here:</strong><br>
+                Genuine automatic visual recognition requires machine learning neural networks (computer vision APIs) running on a cloud server. Because this platform runs entirely locally with vanilla JavaScript and zero paid external APIs, we simulate visual intake, inspect metadata, and let you confirm the matching product from our catalog.
+              </div>
+
+              <div class="match-selector-group">
+                <label for="matchedProductSelect">Select or Confirm Product Listed in Screenshot:</label>
+                <select id="matchedProductSelect" class="match-select">
+                  <!-- Filled via JS -->
+                </select>
+              </div>
+
+              <button id="btnIdentifyProduct" class="btn-identify-confirm">
+                <span>🔍</span> Identify Product & Compare Sellers
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       HOW IT WORKS SECTION
+       ========================================================================== -->
+  <section id="how-it-works" class="section-padding">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Simple & Transparent</span>
+        <h2 class="section-title">How SmartPrice Works</h2>
+        <p class="section-description">
+          Three easy steps designed for farmers, rural families, and smart shoppers to get the honest final price.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+        <!-- Step 1 -->
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <path d="M11 8v6"></path>
+            <path d="M8 11h6"></path>
+          </svg>
+          <h3 class="step-title">Search or Upload</h3>
+          <p class="step-desc">
+            Type the product name in our search box or upload a screenshot from any shopping app on your mobile phone.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <h3 class="step-title">Compare Total Costs</h3>
+          <p class="step-desc">
+            We automatically calculate product price plus shipping fees and extra charges minus active coupons for all sellers.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <svg class="step-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <h3 class="step-title">Pick the True Best Deal</h3>
+          <p class="step-desc">
+            Review historical price trends to see if today is a smart time to buy, then choose the seller with the lowest overall cost.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       TRUST AND SAFETY SECTION
+       ========================================================================== -->
+  <section class="section-padding trust-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Consumer Protection</span>
+        <h2 class="section-title">Our Trust & Safety Principles</h2>
+        <p class="section-description">
+          Honest pricing is our priority. Here is how we protect you from deceptive marketing tricks.
+        </p>
+      </div>
+
+      <div class="trust-grid">
+        <div class="trust-card">
+          <div class="trust-icon-box">⚖️</div>
+          <h4>We compare total cost, not just advertised prices.</h4>
+          <p>
+            Many websites display an artificially low base price, only to tack on steep shipping and handling fees at checkout. We calculate the complete amount.
+          </p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-icon-box">📊</div>
+          <h4>We show sample data clearly when live prices are unavailable.</h4>
+          <p>
+            When live network prices cannot be verified, we clearly label all numbers as demo data so you never mistake simulated numbers for live market contracts.
+          </p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-icon-box">🔮</div>
+          <h4>Our price predictions are estimates, not guarantees.</h4>
+          <p>
+            Smart purchase recommendations evaluate past trends to help you time purchases wisely, but commodity and retail prices may shift unexpectedly.
+          </p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-icon-box">🛡️</div>
+          <h4>Always verify the final price and seller details before purchasing.</h4>
+          <p>
+            We empower you with objective comparison data, but always confirm payment terms, return policies, and seller credibility on the final checkout portal.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       FOOTER
+       ========================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#home" class="brand-logo" style="color: #ffffff;">
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 36C12 36 10 22 24 10C38 22 36 36 36 36C36 36 26 40 12 36Z" fill="#2d7a3e" stroke="#85e498"/>
+              <path d="M24 10V38" stroke="#85e498"/>
+            </svg>
+            <span>SmartPrice</span>
+          </a>
+          <p class="footer-desc">
+            A user-friendly, transparent price comparison platform helping farmers, small businesses, and everyday shoppers find true bargains without hidden fees.
+          </p>
+          <div class="footer-notice">
+            🌱 <em>Educational Demonstration:</em> All product specifications, marketplace sellers, and historical trends are realistic mock data for local demonstration.
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Quick Links</h5>
+          <ul class="footer-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#categories">Browse Categories</a></li>
+            <li><a href="#trending">Trending Deals</a></li>
+            <li><a href="#compare">Compare Seller Prices</a></li>
+            <li><a href="#history">Price History Charts</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Platform Info</h5>
+          <ul class="footer-links">
+            <li><a href="#" id="linkAboutUs">About SmartPrice</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#" id="linkPrivacy">Privacy & Disclaimers</a></li>
+            <li><a href="#upload">Upload Screenshot</a></li>
+            <li><a href="#" id="linkContact">Contact Support</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Transparency Guarantee</h5>
+          <p style="font-size: 0.9rem; color: #bfd9c4; line-height: 1.5; margin-bottom: 12px;">
+            We do not accept paid placement fees from sellers to artificially boost their rankings. The lowest total cost option is always ranked #1.
+          </p>
+          <div style="font-size: 0.85rem; color: #85e498; font-weight: 600;">
+            ✓ Total Cost Transparency<br>
+            ✓ No Hidden Fees Ranking<br>
+            ✓ Offline Capable Architecture
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 SmartPrice Platform. Built with vanilla HTML, CSS, and JavaScript. All rights reserved.
+        </div>
+        <div>
+          Designed for accessibility, clarity, and fair rural trade.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       INFORMATION MODAL (About Us, Privacy, Contact)
+       ========================================================================== -->
+  <div id="infoModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+      <button id="modalCloseBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
+      <h3 id="modalTitle">About SmartPrice</h3>
+      <div id="modalBody">
+        <p>SmartPrice is an independent price comparison concept designed to reveal the true final cost of products.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION POPUP -->
+  <div id="toastNotification" class="toast-notice" role="status" aria-live="polite">
+    <span id="toastMessage">Action completed</span>
+  </div>
+
+  <!-- ==========================================================================
+       JAVASCRIPT CODE
+       Written with clear, pedagogical comments suitable for a first-year college student.
+       ========================================================================== -->
+  <script>
+    /* ==========================================================================
+       1. DATA STRUCTURES & SAMPLE PRODUCTS
+       In real-world web apps, data often comes from a server database via an API.
+       Here, we store our sample catalog locally in a JavaScript Array of Objects
+       so the website works 100% offline without needing any internet connection.
+       ========================================================================== */
+
+    // List of 6 popular categories as requested
+    const CATEGORIES = [
+      {
+        id: "Electronics",
+        name: "Electronics",
+        count: "3 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>`
+      },
+      {
+        id: "Mobile Phones",
+        name: "Mobile Phones",
+        count: "3 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`
+      },
+      {
+        id: "Home Appliances",
+        name: "Home Appliances",
+        count: "3 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M2 20h20"></path><path d="M14 12v.01"></path></svg>`
+      },
+      {
+        id: "Grocery",
+        name: "Grocery",
+        count: "3 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`
+      },
+      {
+        id: "Clothing",
+        name: "Clothing",
+        count: "3 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg>`
+      },
+      {
+        id: "Agriculture & Farming",
+        name: "Agriculture & Farming",
+        count: "4 Items",
+        iconSvg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12A10 10 0 0 1 12 2z"></path><path d="M12 18v-6"></path><path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4"></path></svg>`
+      }
+    ];
+
+    // Master list of realistic sample products across all categories
+    const PRODUCTS = [
+      {
+        id: "prod-1",
+        name: "Solar Drip Irrigation Kit (50 Plants)",
+        category: "Agriculture & Farming",
+        description: "Automatic solar-powered micro drip system with water timer and drippers for orchards and vegetable gardens.",
+        discount: "22% OFF",
+        sellers: [
+          { name: "Kisan Direct Supplies", rating: 4.8, price: 2199, delivery: 0, additional: 50, discount: 100 },
+          { name: "GreenAgro Rural Mart", rating: 4.6, price: 2099, delivery: 180, additional: 40, discount: 50 },
+          { name: "FarmTech Superstore", rating: 4.4, price: 2250, delivery: 0, additional: 0, discount: 80 },
+          { name: "Universal AgriHub", rating: 4.2, price: 1999, delivery: 320, additional: 90, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 2550 },
+          { month: "Dec 2025", price: 2480 },
+          { month: "Jan 2026", price: 2350 },
+          { month: "Feb 2026", price: 2250 },
+          { month: "Mar 2026", price: 2180 },
+          { month: "Apr 2026", price: 2149 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#E8F5E9"/><path d="M50 20C50 20 30 45 30 60C30 71 39 80 50 80C61 80 70 71 70 60C70 45 50 20 50 20Z" fill="#4CAF50"/><circle cx="50" cy="50" r="10" fill="#81C784"/><path d="M25 78H75" stroke="#2E7D32" stroke-width="4" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: "prod-2",
+        name: "High-Yield Certified Wheat Seeds (40 kg)",
+        category: "Agriculture & Farming",
+        description: "Disease-resistant, high germination certified seed bag ideal for irrigated and rain-fed farming plots.",
+        discount: "15% OFF",
+        sellers: [
+          { name: "National Seed Depot", rating: 4.9, price: 1450, delivery: 120, additional: 30, discount: 50 },
+          { name: "Gramin Krishi Seva", rating: 4.7, price: 1490, delivery: 60, additional: 20, discount: 40 },
+          { name: "Harit Kranti Seeds", rating: 4.3, price: 1399, delivery: 220, additional: 50, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 1650 },
+          { month: "Dec 2025", price: 1600 },
+          { month: "Jan 2026", price: 1580 },
+          { month: "Feb 2026", price: 1520 },
+          { month: "Mar 2026", price: 1560 },
+          { month: "Apr 2026", price: 1530 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFF8E1"/><path d="M40 78C35 55 45 30 50 22C55 30 65 55 60 78H40Z" fill="#F9A825"/><path d="M50 22V82" stroke="#F57F17" stroke-width="3"/><circle cx="45" cy="40" r="4" fill="#FFE082"/><circle cx="55" cy="52" r="4" fill="#FFE082"/></svg>`
+      },
+      {
+        id: "prod-3",
+        name: "16L Battery Operated Knapsack Sprayer",
+        category: "Agriculture & Farming",
+        description: "Rechargeable 12V 8Ah battery sprayer with dual nozzles for fertilizers and pest management.",
+        discount: "18% OFF",
+        sellers: [
+          { name: "AgroTools Direct", rating: 4.8, price: 1850, delivery: 80, additional: 40, discount: 70 },
+          { name: "Kisan Bazar Online", rating: 4.5, price: 1799, delivery: 210, additional: 30, discount: 0 },
+          { name: "Modern Agro Equip", rating: 4.6, price: 1890, delivery: 0, additional: 25, discount: 50 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 2100 },
+          { month: "Dec 2025", price: 2050 },
+          { month: "Jan 2026", price: 1980 },
+          { month: "Feb 2026", price: 1950 },
+          { month: "Mar 2026", price: 1900 },
+          { month: "Apr 2026", price: 1865 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#E0F2F1"/><rect x="35" y="30" width="30" height="42" rx="6" fill="#00897B"/><rect x="42" y="22" width="16" height="8" rx="2" fill="#004D40"/><path d="M65 42L80 34V60" stroke="#004D40" stroke-width="3"/></svg>`
+      },
+      {
+        id: "prod-4",
+        name: "Organic Bio-Fertilizer (25 kg Bag)",
+        category: "Agriculture & Farming",
+        description: "Enriched with beneficial mycorrhiza and soil microbes to rejuvenate soil fertility and yield.",
+        discount: "10% OFF",
+        sellers: [
+          { name: "BioFlora Natural", rating: 4.9, price: 680, delivery: 70, additional: 20, discount: 30 },
+          { name: "GreenEarth Agrico", rating: 4.5, price: 650, delivery: 130, additional: 15, discount: 0 },
+          { name: "Rural Farming Club", rating: 4.7, price: 710, delivery: 0, additional: 10, discount: 20 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 790 },
+          { month: "Dec 2025", price: 770 },
+          { month: "Jan 2026", price: 760 },
+          { month: "Feb 2026", price: 750 },
+          { month: "Mar 2026", price: 740 },
+          { month: "Apr 2026", price: 700 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#EFEBE9"/><path d="M30 35H70L65 78H35L30 35Z" fill="#6D4C41"/><path d="M50 45Q45 58 50 65Q55 58 50 45Z" fill="#81C784"/></svg>`
+      },
+      {
+        id: "prod-5",
+        name: "Pure Sine Wave Home Inverter 900VA",
+        category: "Electronics",
+        description: "Supports all home & agricultural load with heavy-duty copper transformer and fast battery charging.",
+        discount: "20% OFF",
+        sellers: [
+          { name: "VoltPower Hub", rating: 4.8, price: 4600, delivery: 150, additional: 80, discount: 250 },
+          { name: "EnergyTech Store", rating: 4.6, price: 4500, delivery: 290, additional: 120, discount: 100 },
+          { name: "SmartElectricians", rating: 4.5, price: 4799, delivery: 0, additional: 50, discount: 200 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 5400 },
+          { month: "Dec 2025", price: 5250 },
+          { month: "Jan 2026", price: 5100 },
+          { month: "Feb 2026", price: 4950 },
+          { month: "Mar 2026", price: 4750 },
+          { month: "Apr 2026", price: 4580 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#ECEFF1"/><rect x="25" y="32" width="50" height="36" rx="4" fill="#37474F"/><circle cx="36" cy="50" r="4" fill="#4CAF50"/><circle cx="48" cy="50" r="4" fill="#FFC107"/><path d="M62 44L58 52H64L60 58" stroke="#00E676" stroke-width="2"/></svg>`
+      },
+      {
+        id: "prod-6",
+        name: "Emergency Solar LED Lantern & Charger",
+        category: "Electronics",
+        description: "Heavy duty 360-degree illumination with high efficiency solar panel and USB mobile charging output.",
+        discount: "30% OFF",
+        sellers: [
+          { name: "SunLight Rural Direct", rating: 4.7, price: 799, delivery: 40, additional: 20, discount: 50 },
+          { name: "MegaMart Deals", rating: 4.3, price: 749, delivery: 110, additional: 35, discount: 0 },
+          { name: "BrightHome Appliances", rating: 4.6, price: 820, delivery: 0, additional: 15, discount: 30 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 990 },
+          { month: "Dec 2025", price: 950 },
+          { month: "Jan 2026", price: 890 },
+          { month: "Feb 2026", price: 850 },
+          { month: "Mar 2026", price: 830 },
+          { month: "Apr 2026", price: 809 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFFDE7"/><rect x="38" y="32" width="24" height="40" rx="6" fill="#FBC02D"/><ellipse cx="50" cy="46" rx="7" ry="9" fill="#FFF9C4"/></svg>`
+      },
+      {
+        id: "prod-7",
+        name: "Digital Multimeter & Circuit Tester",
+        category: "Electronics",
+        description: "High precision AC/DC voltmeter, current & resistance meter with backlight display and continuity buzzer.",
+        discount: "25% OFF",
+        sellers: [
+          { name: "ElectroPro Hardware", rating: 4.8, price: 499, delivery: 50, additional: 10, discount: 30 },
+          { name: "TechSavvy Mart", rating: 4.4, price: 460, delivery: 110, additional: 20, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 650 },
+          { month: "Dec 2025", price: 620 },
+          { month: "Jan 2026", price: 580 },
+          { month: "Feb 2026", price: 560 },
+          { month: "Mar 2026", price: 540 },
+          { month: "Apr 2026", price: 529 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFF3E0"/><rect x="34" y="24" width="32" height="52" rx="4" fill="#E65100"/><rect x="40" y="30" width="20" height="12" fill="#FFE0B2"/></svg>`
+      },
+      {
+        id: "prod-8",
+        name: "Rugged Long-Battery 4G Phone with Torch",
+        category: "Mobile Phones",
+        description: "Built for tough outdoors with 4000mAh battery, wireless FM, loud speaker, and super-bright dual torch.",
+        discount: "14% OFF",
+        sellers: [
+          { name: "RuralConnect Mobiles", rating: 4.8, price: 1699, delivery: 0, additional: 30, discount: 50 },
+          { name: "GadgetExpress Hub", rating: 4.5, price: 1649, delivery: 90, additional: 40, discount: 0 },
+          { name: "CityMobile Wholesale", rating: 4.6, price: 1720, delivery: 0, additional: 0, discount: 60 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 1950 },
+          { month: "Dec 2025", price: 1890 },
+          { month: "Jan 2026", price: 1820 },
+          { month: "Feb 2026", price: 1780 },
+          { month: "Mar 2026", price: 1720 },
+          { month: "Apr 2026", price: 1679 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#E8EAF6"/><rect x="34" y="22" width="32" height="56" rx="5" fill="#283593"/><rect x="40" y="28" width="20" height="20" rx="2" fill="#C5CAE9"/><circle cx="50" cy="66" r="4" fill="#9FA8DA"/></svg>`
+      },
+      {
+        id: "prod-9",
+        name: "SmartVoice 5G (6GB RAM, 128GB)",
+        category: "Mobile Phones",
+        description: "Fast 5G smartphone with 50MP camera, 5000mAh battery, and simple high-contrast large font UI mode.",
+        discount: "18% OFF",
+        sellers: [
+          { name: "PrimeCellular Online", rating: 4.8, price: 11499, delivery: 0, additional: 99, discount: 500 },
+          { name: "TechUniverse", rating: 4.6, price: 11250, delivery: 150, additional: 120, discount: 200 },
+          { name: "Universal Gizmos", rating: 4.3, price: 11399, delivery: 80, additional: 50, discount: 300 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 13500 },
+          { month: "Dec 2025", price: 12999 },
+          { month: "Jan 2026", price: 12500 },
+          { month: "Feb 2026", price: 12200 },
+          { month: "Mar 2026", price: 11800 },
+          { month: "Apr 2026", price: 11098 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#F3E5F5"/><rect x="32" y="20" width="36" height="60" rx="6" fill="#4A148C"/><rect x="35" y="24" width="30" height="52" rx="3" fill="#E1BEE7"/></svg>`
+      },
+      {
+        id: "prod-10",
+        name: "FarmerEase Big-Button Senior Feature Phone",
+        category: "Mobile Phones",
+        description: "Extra loud speaker, SOS emergency button, physical keypad, and long standby battery.",
+        discount: "20% OFF",
+        sellers: [
+          { name: "SeniorCare Tech", rating: 4.9, price: 1299, delivery: 40, additional: 15, discount: 50 },
+          { name: "TeleMart India", rating: 4.4, price: 1249, delivery: 110, additional: 25, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 1499 },
+          { month: "Dec 2025", price: 1450 },
+          { month: "Jan 2026", price: 1399 },
+          { month: "Feb 2026", price: 1350 },
+          { month: "Mar 2026", price: 1320 },
+          { month: "Apr 2026", price: 1304 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FBE9E7"/><rect x="34" y="22" width="32" height="56" rx="4" fill="#D84315"/><rect x="38" y="26" width="24" height="18" fill="#FFCCBC"/></svg>`
+      },
+      {
+        id: "prod-11",
+        name: "Automatic Electric Rice Cooker (2.8L)",
+        category: "Home Appliances",
+        description: "Stainless steel inner pot with keep-warm mode and thermal fuse protection for everyday family meals.",
+        discount: "22% OFF",
+        sellers: [
+          { name: "KitchenCrafters", rating: 4.7, price: 1899, delivery: 0, additional: 30, discount: 100 },
+          { name: "HomeEssentials Mart", rating: 4.5, price: 1820, delivery: 120, additional: 40, discount: 0 },
+          { name: "QuickDeliver Store", rating: 4.3, price: 1850, delivery: 80, additional: 25, discount: 50 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 2250 },
+          { month: "Dec 2025", price: 2199 },
+          { month: "Jan 2026", price: 2090 },
+          { month: "Feb 2026", price: 1999 },
+          { month: "Mar 2026", price: 1920 },
+          { month: "Apr 2026", price: 1829 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#EDE7F6"/><path d="M28 42H72V68C72 74 66 80 60 80H40C34 80 28 74 28 68V42Z" fill="#5E35B1"/><path d="M25 42H75V36C75 33 71 30 68 30H32C29 30 25 33 25 36V42Z" fill="#9575CD"/></svg>`
+      },
+      {
+        id: "prod-12",
+        name: "High-Airflow BLDC Energy Saver Ceiling Fan",
+        category: "Home Appliances",
+        description: "Consumes only 28W power with remote control, ideal for solar inverters and energy-conscious homes.",
+        discount: "16% OFF",
+        sellers: [
+          { name: "AeroCool Appliances", rating: 4.8, price: 2499, delivery: 0, additional: 40, discount: 150 },
+          { name: "ElectricPlaza", rating: 4.6, price: 2399, delivery: 150, additional: 50, discount: 50 },
+          { name: "RuralPower Mart", rating: 4.4, price: 2450, delivery: 60, additional: 20, discount: 80 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 2850 },
+          { month: "Dec 2025", price: 2790 },
+          { month: "Jan 2026", price: 2650 },
+          { month: "Feb 2026", price: 2580 },
+          { month: "Mar 2026", price: 2520 },
+          { month: "Apr 2026", price: 2389 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#E0F7FA"/><circle cx="50" cy="50" r="14" fill="#0097A7"/><path d="M50 36V18M64 50H82M50 64V82M36 50H18" stroke="#00838F" stroke-width="4" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: "prod-13",
+        name: "Stainless Steel 3-Jar Mixer Grinder 750W",
+        category: "Home Appliances",
+        description: "Heavy-duty 100% copper motor with overload protection for tough grinding of spices and grains.",
+        discount: "24% OFF",
+        sellers: [
+          { name: "HomeChef Hub", rating: 4.7, price: 2150, delivery: 50, additional: 30, discount: 100 },
+          { name: "KitchenKing Mart", rating: 4.5, price: 2090, delivery: 160, additional: 40, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 2600 },
+          { month: "Dec 2025", price: 2490 },
+          { month: "Jan 2026", price: 2380 },
+          { month: "Feb 2026", price: 2280 },
+          { month: "Mar 2026", price: 2200 },
+          { month: "Apr 2026", price: 2130 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FCE4EC"/><path d="M36 34H64L60 76H40L36 34Z" fill="#C2185B"/><rect x="32" y="76" width="36" height="8" rx="2" fill="#880E4F"/></svg>`
+      },
+      {
+        id: "prod-14",
+        name: "Traditional Farm Basmati Rice (10 kg Pack)",
+        category: "Grocery",
+        description: "Naturally aged extra long aromatic grains sourced straight from farmer cooperatives.",
+        discount: "12% OFF",
+        sellers: [
+          { name: "Annapurna Farm Direct", rating: 4.9, price: 920, delivery: 40, additional: 10, discount: 50 },
+          { name: "Gramin Grains Hub", rating: 4.6, price: 890, delivery: 90, additional: 20, discount: 0 },
+          { name: "PureBite Staples", rating: 4.4, price: 950, delivery: 0, additional: 15, discount: 40 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 980 },
+          { month: "Dec 2025", price: 960 },
+          { month: "Jan 2026", price: 950 },
+          { month: "Feb 2026", price: 940 },
+          { month: "Mar 2026", price: 930 },
+          { month: "Apr 2026", price: 920 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFFDE7"/><path d="M34 32H66L62 78H38L34 32Z" fill="#FBC02D"/><ellipse cx="50" cy="55" rx="6" ry="12" fill="#FFFFFF"/></svg>`
+      },
+      {
+        id: "prod-15",
+        name: "Cold-Pressed Mustard Oil (5 Litre Can)",
+        category: "Grocery",
+        description: "Traditional kachi ghani unrefined oil retaining natural pungency and health antioxidants.",
+        discount: "15% OFF",
+        sellers: [
+          { name: "Shuddh Tel Mills", rating: 4.8, price: 799, delivery: 50, additional: 20, discount: 40 },
+          { name: "Kisan Organics", rating: 4.7, price: 780, delivery: 110, additional: 30, discount: 0 },
+          { name: "DirectFromFarm", rating: 4.5, price: 820, delivery: 0, additional: 10, discount: 30 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 920 },
+          { month: "Dec 2025", price: 890 },
+          { month: "Jan 2026", price: 870 },
+          { month: "Feb 2026", price: 840 },
+          { month: "Mar 2026", price: 820 },
+          { month: "Apr 2026", price: 829 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFF9C4"/><rect x="36" y="30" width="28" height="46" rx="4" fill="#F57F17"/><path d="M44 24H56V30H44V24Z" fill="#E65100"/></svg>`
+      },
+      {
+        id: "prod-16",
+        name: "Organic Unpolished Toor Dal (5 kg)",
+        category: "Grocery",
+        description: "High protein yellow pigeon peas free from chemical polish, sourced from regenerative farms.",
+        discount: "10% OFF",
+        sellers: [
+          { name: "DesiPulse Naturals", rating: 4.8, price: 620, delivery: 40, additional: 10, discount: 30 },
+          { name: "Gramin Wholesale", rating: 4.6, price: 599, delivery: 85, additional: 15, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 680 },
+          { month: "Dec 2025", price: 670 },
+          { month: "Jan 2026", price: 660 },
+          { month: "Feb 2026", price: 650 },
+          { month: "Mar 2026", price: 640 },
+          { month: "Apr 2026", price: 640 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFF3E0"/><circle cx="50" cy="50" r="22" fill="#FB8C00"/><circle cx="45" cy="45" r="5" fill="#FFE0B2"/><circle cx="55" cy="54" r="4" fill="#FFE0B2"/></svg>`
+      },
+      {
+        id: "prod-17",
+        name: "Heavy-Duty All-Weather Gum Boots",
+        category: "Clothing",
+        description: "Waterproof anti-skid rubber footwear providing protection in muddy fields and monsoon seasons.",
+        discount: "18% OFF",
+        sellers: [
+          { name: "FarmSafe Workwear", rating: 4.8, price: 449, delivery: 40, additional: 10, discount: 20 },
+          { name: "Gramin Footwear Mart", rating: 4.5, price: 420, delivery: 95, additional: 15, discount: 0 },
+          { name: "AgriGear Pro", rating: 4.7, price: 460, delivery: 0, additional: 10, discount: 25 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 520 },
+          { month: "Dec 2025", price: 500 },
+          { month: "Jan 2026", price: 490 },
+          { month: "Feb 2026", price: 480 },
+          { month: "Mar 2026", price: 470 },
+          { month: "Apr 2026", price: 479 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#ECEFF1"/><path d="M40 25H55V60L68 68V78H36V60L40 25Z" fill="#37474F"/></svg>`
+      },
+      {
+        id: "prod-18",
+        name: "Cotton Long-Sleeve Work Shirt (Pack of 2)",
+        category: "Clothing",
+        description: "Durable, breathable 100% cotton fabric protecting against sun exposure and field thorns.",
+        discount: "20% OFF",
+        sellers: [
+          { name: "CottonFab Direct", rating: 4.7, price: 699, delivery: 0, additional: 20, discount: 50 },
+          { name: "WorkerFit Garments", rating: 4.4, price: 670, delivery: 80, additional: 25, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 820 },
+          { month: "Dec 2025", price: 799 },
+          { month: "Jan 2026", price: 780 },
+          { month: "Feb 2026", price: 750 },
+          { month: "Mar 2026", price: 720 },
+          { month: "Apr 2026", price: 669 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#E8F5E9"/><path d="M35 30L20 44L28 54L35 44V76H65V44L72 54L80 44L65 30H35Z" fill="#388E3C"/></svg>`
+      },
+      {
+        id: "prod-19",
+        name: "Wide-Brim Sun Protection Canvas Farm Hat",
+        category: "Clothing",
+        description: "UV-blocking breathable canvas hat with adjustable chin strap and sweat-absorbing inner band.",
+        discount: "25% OFF",
+        sellers: [
+          { name: "SunShield Outdoors", rating: 4.9, price: 299, delivery: 30, additional: 10, discount: 20 },
+          { name: "AgriStyles India", rating: 4.5, price: 279, delivery: 75, additional: 15, discount: 0 }
+        ],
+        priceHistory: [
+          { month: "Nov 2025", price: 380 },
+          { month: "Dec 2025", price: 360 },
+          { month: "Jan 2026", price: 350 },
+          { month: "Feb 2026", price: 330 },
+          { month: "Mar 2026", price: 310 },
+          { month: "Apr 2026", price: 319 }
+        ],
+        svgArt: `<svg class="product-svg-icon" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="42" fill="#FFFDE7"/><ellipse cx="50" cy="62" rx="36" ry="12" fill="#FBC02D"/><path d="M34 62C34 42 40 34 50 34C60 34 66 42 66 62H34Z" fill="#F57F17"/></svg>`
+      }
+    ];
+
+    /* ==========================================================================
+       2. APPLICATION STATE
+       A clean state object keeps track of user filters, active selections,
+       and visual preferences without polluting global variables.
+       ========================================================================== */
+    const appState = {
+      selectedCategory: "All",
+      searchQuery: "",
+      activeCompareProductId: PRODUCTS[0].id,
+      activeHistoryProductId: PRODUCTS[0].id,
+      uploadedImageSrc: null,
+      largeTextEnabled: false
+    };
+
+    /* ==========================================================================
+       3. MATHEMATICAL TOTAL COST HELPER FUNCTION
+       Requirement:
+       Total Cost = Product Price + Delivery Fee + Additional Charges − Applicable Discounts
+       This function calculates and returns the true bottom line for any seller.
+       ========================================================================== */
+    function calculateSellerTotal(seller) {
+      // Ensure values are treated as numbers
+      const price = Number(seller.price) || 0;
+      const delivery = Number(seller.delivery) || 0;
+      const additional = Number(seller.additional) || 0;
+      const discount = Number(seller.discount) || 0;
+
+      // Formula implementation
+      const total = price + delivery + additional - discount;
+      return total;
+    }
+
+    /* Helper function to find the lowest sample price among all sellers of a product */
+    function getLowestProductPrice(product) {
+      if (!product.sellers || product.sellers.length === 0) return 0;
+      // Map all seller totals and take the minimum
+      const totals = product.sellers.map(s => calculateSellerTotal(s));
+      return Math.min(...totals);
+    }
+
+    /* Format currency nicely with Indian Rupee symbol */
+    function formatCurrency(amount) {
+      return "₹" + Number(amount).toLocaleString("en-IN");
+    }
+
+    /* ==========================================================================
+       4. DOM RENDERING FUNCTIONS
+       These functions read the data structures and build HTML dynamically.
+       ========================================================================== */
+
+    // Render Category Cards
+    function renderCategoryCards() {
+      const container = document.getElementById("categoryCardsContainer");
+      const chipsContainer = document.getElementById("categoryFilterChips");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      // Build the 6 category cards
+      CATEGORIES.forEach(cat => {
+        const card = document.createElement("div");
+        card.className = "category-card";
+        if (appState.selectedCategory === cat.name) {
+          card.classList.add("active");
+        }
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-label", "Filter category: " + cat.name);
+
+        card.innerHTML = `
+          <div class="category-icon-wrapper">
+            ${cat.iconSvg}
+          </div>
+          <div class="category-name">${cat.name}</div>
+          <div class="category-count">${cat.count}</div>
+        `;
+
+        // Click event listener to filter products
+        card.addEventListener("click", () => {
+          setCategoryFilter(cat.name);
+        });
+
+        // Keyboard accessibility (Enter key)
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setCategoryFilter(cat.name);
+          }
+        });
+
+        container.appendChild(card);
+      });
+
+      // Also build the filter chips underneath
+      if (chipsContainer) {
+        chipsContainer.innerHTML = `
+          <button class="filter-chip ${appState.selectedCategory === 'All' ? 'active' : ''}" data-cat="All">Show All Categories</button>
+        `;
+        CATEGORIES.forEach(cat => {
+          const chip = document.createElement("button");
+          chip.className = `filter-chip ${appState.selectedCategory === cat.name ? 'active' : ''}`;
+          chip.textContent = cat.name;
+          chip.setAttribute("data-cat", cat.name);
+          chip.addEventListener("click", () => {
+            setCategoryFilter(cat.name);
+          });
+          chipsContainer.appendChild(chip);
+        });
+
+        // Add listener to the 'All' button
+        const allBtn = chipsContainer.querySelector('[data-cat="All"]');
+        if (allBtn) {
+          allBtn.addEventListener("click", () => setCategoryFilter("All"));
+        }
+      }
+    }
+
+    // Filter setter with visual feedback
+    function setCategoryFilter(categoryName) {
+      appState.selectedCategory = categoryName;
+      renderCategoryCards();
+      renderProductsGrid();
+      showToast(`Showing category: ${categoryName}`);
+
+      // Smooth scroll to trending deals section
+      const trendingSec = document.getElementById("trending");
+      if (trendingSec) {
+        trendingSec.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    // Render Products Grid based on current filters and search
+    function renderProductsGrid() {
+      const grid = document.getElementById("productsGrid");
+      const countLabel = document.getElementById("resultsCount");
+      const clearBtn = document.getElementById("clearSearchBtn");
+      if (!grid) return;
+
+      // Filter products array using Array.filter()
+      const query = appState.searchQuery.trim().toLowerCase();
+
+      const filtered = PRODUCTS.filter(prod => {
+        // Category check
+        const matchesCategory = (appState.selectedCategory === "All") || 
+                                (prod.category.toLowerCase() === appState.selectedCategory.toLowerCase());
+
+        // Case-insensitive text search check
+        const matchesSearch = query === "" || 
+                              prod.name.toLowerCase().includes(query) || 
+                              prod.category.toLowerCase().includes(query) ||
+                              prod.description.toLowerCase().includes(query);
+
+        return matchesCategory && matchesSearch;
+      });
+
+      // Update count status text
+      if (countLabel) {
+        if (query) {
+          countLabel.textContent = `Found ${filtered.length} products matching "${appState.searchQuery}"`;
+        } else if (appState.selectedCategory !== "All") {
+          countLabel.textContent = `${filtered.length} products in ${appState.selectedCategory}`;
+        } else {
+          countLabel.textContent = `Showing all ${filtered.length} verified products`;
+        }
+      }
+
+      // Show/hide Clear Search button
+      if (clearBtn) {
+        clearBtn.style.display = (query || appState.selectedCategory !== "All") ? "inline-block" : "none";
+      }
+
+      grid.innerHTML = "";
+
+      // Handle empty search results
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="no-results-box">
+            <h3>No products found</h3>
+            <p style="color: var(--text-muted); margin-bottom: 16px;">
+              We couldn't find any items matching "<strong>${escapeHtml(appState.searchQuery)}</strong>" in <em>${appState.selectedCategory}</em>.
+            </p>
+            <button class="btn-search" onclick="resetAllFilters()">Reset Filters & Search Again</button>
+          </div>
+        `;
+        return;
+      }
+
+      // Generate product cards
+      filtered.forEach(product => {
+        const lowestTotal = getLowestProductPrice(product);
+        const sellersCount = product.sellers.length;
+
+        const card = document.createElement("div");
+        card.className = "product-card";
+
+        card.innerHTML = `
+          <div class="product-visual">
+            <span class="discount-pill">${product.discount}</span>
+            <span class="category-pill">${product.category}</span>
+            ${product.svgArt}
+          </div>
+          <div class="product-body">
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <div class="product-meta-row">
+              <div class="price-block">
+                <span class="price-label">Lowest Total Price</span>
+                <span class="price-value">${formatCurrency(lowestTotal)}</span>
+              </div>
+              <span class="sellers-count-badge">
+                🏪 ${sellersCount} Sellers
+              </span>
+            </div>
+            <div class="product-actions">
+              <button class="btn-card-compare" data-id="${product.id}">
+                Compare Prices
+              </button>
+              <button class="btn-card-history" data-id="${product.id}">
+                Price History
+              </button>
+            </div>
+          </div>
+        `;
+
+        // Attach action handlers
+        const compareBtn = card.querySelector(".btn-card-compare");
+        const historyBtn = card.querySelector(".btn-card-history");
+
+        compareBtn.addEventListener("click", () => {
+          selectProductForCompare(product.id);
+        });
+
+        historyBtn.addEventListener("click", () => {
+          selectProductForHistory(product.id);
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    /* ==========================================================================
+       5. PRICE COMPARISON PREVIEW LOGIC
+       Ranks sellers from lowest actual total cost to highest, not simply by base price.
+       ========================================================================== */
+    function populateCompareDropdown() {
+      const select = document.getElementById("compareProductSelect");
+      if (!select) return;
+
+      select.innerHTML = "";
+      PRODUCTS.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.category})`;
+        if (p.id === appState.activeCompareProductId) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+
+      select.addEventListener("change", (e) => {
+        appState.activeCompareProductId = e.target.value;
+        renderComparisonTable();
+      });
+    }
+
+    function selectProductForCompare(productId) {
+      appState.activeCompareProductId = productId;
+      const select = document.getElementById("compareProductSelect");
+      if (select) {
+        select.value = productId;
+      }
+      renderComparisonTable();
+
+      // Smooth scroll to comparison section
+      const compareSec = document.getElementById("compare");
+      if (compareSec) {
+        compareSec.scrollIntoView({ behavior: "smooth" });
+      }
+      showToast("Updated comparison for: " + getProductById(productId).name);
+    }
+
+    function renderComparisonTable() {
+      const tbody = document.getElementById("comparisonTableBody");
+      const insightText = document.getElementById("comparisonInsightText");
+      if (!tbody) return;
+
+      const product = getProductById(appState.activeCompareProductId);
+      if (!product) return;
+
+      // 1. Calculate full total for each seller
+      // 2. Sort sellers strictly from lowest total cost to highest
+      const scoredSellers = product.sellers.map(seller => {
+        const total = calculateSellerTotal(seller);
+        return {
+          ...seller,
+          totalCost: total
+        };
+      });
+
+      // Ascending order sort: a - b ensures smallest total cost is at index 0
+      scoredSellers.sort((a, b) => a.totalCost - b.totalCost);
+
+      tbody.innerHTML = "";
+
+      scoredSellers.forEach((seller, index) => {
+        const isBest = index === 0; // The lowest total cost option
+        const row = document.createElement("tr");
+        if (isBest) {
+          row.className = "row-best-price";
+        }
+
+        row.innerHTML = `
+          <td>
+            <div class="seller-title-cell">
+              <div class="seller-avatar">${seller.name.charAt(0)}</div>
+              <div>
+                <strong>${seller.name}</strong>
+                ${isBest ? `<span class="best-badge">★ Best Total Price</span>` : ""}
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  ⭐ ${seller.rating} / 5.0 Reliability Rating
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>${formatCurrency(seller.price)}</td>
+          <td>
+            ${seller.delivery === 0 ? `<span style="color: var(--primary); font-weight:700;">FREE</span>` : formatCurrency(seller.delivery)}
+          </td>
+          <td>
+            ${seller.additional === 0 ? `<span>₹0</span>` : formatCurrency(seller.additional)}
+          </td>
+          <td>
+            ${seller.discount > 0 ? `<span style="color: var(--primary); font-weight:700;">-${formatCurrency(seller.discount)}</span>` : "—"}
+          </td>
+          <td>
+            <div class="cost-total-cell">${formatCurrency(seller.totalCost)}</div>
+          </td>
+          <td>
+            <button class="btn-select-seller" onclick="showSellerModal('${escapeHtml(seller.name)}', '${formatCurrency(seller.totalCost)}')">
+              Select Deal
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(row);
+      });
+
+      // Update dynamic insight note
+      if (insightText && scoredSellers.length > 1) {
+        const cheapestBase = [...scoredSellers].sort((a,b) => a.price - b.price)[0];
+        const cheapestTotal = scoredSellers[0];
+
+        if (cheapestBase.name !== cheapestTotal.name) {
+          insightText.innerHTML = `
+            <strong>Hidden Fee Trap Avoided!</strong> Seller <em>${cheapestBase.name}</em> displayed a lower sticker price (${formatCurrency(cheapestBase.price)}), 
+            but <strong>${cheapestTotal.name}</strong> wins the lowest overall total cost (${formatCurrency(cheapestTotal.totalCost)}) thanks to zero or lower shipping and discounts.
+          `;
+        } else {
+          insightText.innerHTML = `
+            <strong>Clear Winner:</strong> <strong>${cheapestTotal.name}</strong> offers both competitive base pricing and minimal delivery charges, saving you approximately 
+            ${formatCurrency(scoredSellers[scoredSellers.length - 1].totalCost - cheapestTotal.totalCost)} compared to the highest-cost seller.
+          `;
+        }
+      }
+    }
+
+    /* ==========================================================================
+       6. PRICE HISTORY & SMART RECOMMENDATIONS (Pure Vanilla JS SVG Chart)
+       Generates a responsive SVG line chart without any external chart libraries.
+       ========================================================================== */
+    function populateHistoryDropdown() {
+      const select = document.getElementById("historyProductSelect");
+      if (!select) return;
+
+      select.innerHTML = "";
+      PRODUCTS.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.name}`;
+        if (p.id === appState.activeHistoryProductId) {
+          opt.selected = true;
+        }
+        select.appendChild(opt);
+      });
+
+      select.addEventListener("change", (e) => {
+        appState.activeHistoryProductId = e.target.value;
+        renderPriceHistoryChart();
+      });
+    }
+
+    function selectProductForHistory(productId) {
+      appState.activeHistoryProductId = productId;
+      const select = document.getElementById("historyProductSelect");
+      if (select) {
+        select.value = productId;
+      }
+      renderPriceHistoryChart();
+
+      const historySec = document.getElementById("history");
+      if (historySec) {
+        historySec.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    function renderPriceHistoryChart() {
+      const product = getProductById(appState.activeHistoryProductId);
+      if (!product || !product.priceHistory) return;
+
+      const chartTitle = document.getElementById("chartProductTitle");
+      const svg = document.getElementById("priceChartSvg");
+      const statLowest = document.getElementById("statLowestPrice");
+      const statHighest = document.getElementById("statHighestPrice");
+      const statCurrent = document.getElementById("statCurrentPrice");
+      const statPosition = document.getElementById("statPositionLabel");
+
+      if (chartTitle) {
+        chartTitle.textContent = `${product.name} — Historical Trend`;
+      }
+
+      const history = product.priceHistory;
+      const prices = history.map(item => item.price);
+
+      // Calculations for statistics
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const currentPrice = prices[prices.length - 1]; // latest recorded price
+      const avgPrice = Math.round(prices.reduce((sum, val) => sum + val, 0) / prices.length);
+
+      // Update stat cards
+      if (statLowest) statLowest.textContent = formatCurrency(minPrice);
+      if (statHighest) statHighest.textContent = formatCurrency(maxPrice);
+      if (statCurrent) statCurrent.textContent = formatCurrency(currentPrice);
+
+      // Determine price position: low, high, or near average
+      const priceSpan = maxPrice - minPrice || 1; // prevent divide by zero
+      const relativePositionRatio = (currentPrice - minPrice) / priceSpan;
+
+      let positionText = "Near historical average";
+      if (relativePositionRatio <= 0.3) {
+        positionText = "🟢 Close to all-time low";
+      } else if (relativePositionRatio >= 0.7) {
+        positionText = "🔴 Near all-time peak";
+      }
+      if (statPosition) statPosition.textContent = positionText;
+
+      // Update Smart Recommendation
+      updateRecommendationBanner(currentPrice, minPrice, maxPrice, avgPrice);
+
+      // Render the SVG Line Chart
+      if (!svg) return;
+
+      const width = 800;
+      const height = 280;
+      const paddingLeft = 70;
+      const paddingRight = 40;
+      const paddingTop = 30;
+      const paddingBottom = 45;
+
+      const plotWidth = width - paddingLeft - paddingRight;
+      const plotHeight = height - paddingTop - paddingBottom;
+
+      // Price buffer so the line doesn't touch the very top or bottom edge
+      const yMin = Math.floor(minPrice * 0.92);
+      const yMax = Math.ceil(maxPrice * 1.08);
+      const yRange = yMax - yMin;
+
+      // Calculate (x, y) coordinates for each historical month
+      const points = history.map((item, index) => {
+        const x = paddingLeft + (index / (history.length - 1)) * plotWidth;
+        const normalizedY = (item.price - yMin) / yRange;
+        const y = height - paddingBottom - normalizedY * plotHeight;
+        return { x, y, price: item.price, month: item.month };
+      });
+
+      // SVG path string (M x y L x y ...)
+      const pathD = points.reduce((acc, pt, idx) => {
+        return idx === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
+      }, "");
+
+      // Shaded area under the line path
+      const areaD = `${pathD} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`;
+
+      // Build grid lines and labels
+      let gridSvg = "";
+      const gridLevels = 4;
+      for (let i = 0; i <= gridLevels; i++) {
+        const ratio = i / gridLevels;
+        const yVal = Math.round(yMin + ratio * yRange);
+        const yPos = height - paddingBottom - ratio * plotHeight;
+
+        gridSvg += `
+          <!-- Horizontal gridline -->
+          <line x1="${paddingLeft}" y1="${yPos}" x2="${width - paddingRight}" y2="${yPos}" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 4" />
+          <!-- Y-axis price label -->
+          <text x="${paddingLeft - 10}" y="${yPos + 4}" fill="#6c7a70" font-size="12" text-anchor="end" font-family="sans-serif">₹${yVal}</text>
+        `;
+      }
+
+      // X-axis month labels and interactive points
+      let xLabelsSvg = "";
+      let pointsSvg = "";
+
+      points.forEach(pt => {
+        // Month label
+        xLabelsSvg += `
+          <text x="${pt.x}" y="${height - 15}" fill="#536458" font-size="12" font-weight="600" text-anchor="middle" font-family="sans-serif">${pt.month}</text>
+          <line x1="${pt.x}" y1="${height - paddingBottom}" x2="${pt.x}" y2="${height - paddingBottom + 5}" stroke="#9e9e9e" stroke-width="1"/>
+        `;
+
+        // Interactive SVG circle with tooltip
+        pointsSvg += `
+          <g class="chart-point-group">
+            <circle class="chart-point" cx="${pt.x}" cy="${pt.y}" r="6" fill="#2d7a3e" stroke="#ffffff" stroke-width="3">
+              <title>${pt.month}: ${formatCurrency(pt.price)}</title>
+            </circle>
+            <!-- Value label right above point -->
+            <text x="${pt.x}" y="${pt.y - 12}" fill="#1b4d24" font-size="11" font-weight="bold" text-anchor="middle" font-family="sans-serif">
+              ₹${pt.price}
+            </text>
+          </g>
+        `;
+      });
+
+      // Assemble final SVG inner content
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#4CAF50" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Base Axes -->
+        <line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" stroke="#b0bec5" stroke-width="2"/>
+        <line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${height - paddingBottom}" stroke="#b0bec5" stroke-width="2"/>
+
+        <!-- Grid Lines -->
+        ${gridSvg}
+
+        <!-- Shaded Area Under Curve -->
+        <path d="${areaD}" fill="url(#chartGradient)" />
+
+        <!-- Historical Trend Line -->
+        <path d="${pathD}" fill="none" stroke="#2d7a3e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- X-axis Month Labels -->
+        ${xLabelsSvg}
+
+        <!-- Interactive Points -->
+        ${pointsSvg}
+      `;
+    }
+
+    /* Rule-based Smart Recommendation Engine */
+    function updateRecommendationBanner(currentPrice, minPrice, maxPrice, avgPrice) {
+      const banner = document.getElementById("recommendationBanner");
+      const icon = document.getElementById("recIcon");
+      const title = document.getElementById("recTitle");
+      const desc = document.getElementById("recDesc");
+      if (!banner || !icon || !title || !desc) return;
+
+      const span = maxPrice - minPrice || 1;
+      const ratio = (currentPrice - minPrice) / span;
+
+      // Remove existing modifier classes
+      banner.className = "recommendation-box";
+
+      if (ratio <= 0.35) {
+        // Condition: Price is near historical low
+        banner.classList.add("rec-buy-now");
+        icon.textContent = "🟢";
+        title.textContent = "Buy Now — The current price is near the historical low.";
+        desc.innerHTML = `
+          Today's sample price of <strong>${formatCurrency(currentPrice)}</strong> is very close to the recorded minimum of <strong>${formatCurrency(minPrice)}</strong>. 
+          Historically, prices for this item have risen up to ${formatCurrency(maxPrice)}. Purchasing now provides significant potential savings.
+        `;
+      } else if (ratio >= 0.70) {
+        // Condition: Price is relatively high
+        banner.classList.add("rec-wait");
+        icon.textContent = "🟠";
+        title.textContent = "Consider Waiting — Today's price is relatively high.";
+        desc.innerHTML = `
+          Today's sample price of <strong>${formatCurrency(currentPrice)}</strong> is nearing the historical peak of <strong>${formatCurrency(maxPrice)}</strong>. 
+          If your purchase is not urgent, waiting a few weeks may allow prices to return toward the seasonal average of <strong>${formatCurrency(avgPrice)}</strong>.
+        `;
+      } else {
+        // Condition: Near average
+        banner.classList.add("rec-fair");
+        icon.textContent = "🟡";
+        title.textContent = "Fair Price — Today's price is near the historical average.";
+        desc.innerHTML = `
+          At <strong>${formatCurrency(currentPrice)}</strong>, this item is trading in line with its typical historical range (average: ${formatCurrency(avgPrice)}). 
+          It represents a reasonable deal if you need the product today.
+        `;
+      }
+    }
+
+    /* ==========================================================================
+       7. SCREENSHOT UPLOAD & MANUAL IDENTIFICATION LOGIC
+       Uses HTML5 FileReader API to preview user images locally without a backend.
+       Provides honest educational explanation of why true ML recognition needs APIs.
+       ========================================================================== */
+    function setupScreenshotUpload() {
+      const dropzone = document.getElementById("uploadDropzone");
+      const fileInput = document.getElementById("screenshotFileInput");
+      const browseBtn = document.getElementById("browseFileBtn");
+      const previewBox = document.getElementById("screenshotPreviewBox");
+      const imgPreview = document.getElementById("screenshotImgPreview");
+      const metaText = document.getElementById("imageMetaText");
+      const matchSelect = document.getElementById("matchedProductSelect");
+      const confirmBtn = document.getElementById("btnIdentifyProduct");
+      const sampleButtons = document.querySelectorAll(".btn-sample-shot");
+
+      if (!dropzone || !fileInput) return;
+
+      // Populate manual confirmation dropdown with all catalog products
+      if (matchSelect) {
+        matchSelect.innerHTML = "";
+        PRODUCTS.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p.id;
+          opt.textContent = `${p.name} — (${p.category})`;
+          matchSelect.appendChild(opt);
+        });
+      }
+
+      // Open file dialog on browse button click
+      if (browseBtn) {
+        browseBtn.addEventListener("click", () => fileInput.click());
+      }
+      dropzone.addEventListener("click", (e) => {
+        if (e.target !== browseBtn) fileInput.click();
+      });
+
+      // Drag and drop events
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("drag-active");
+      });
+      dropzone.addEventListener("dragleave", () => {
+        dropzone.classList.remove("drag-active");
+      });
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("drag-active");
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleSelectedFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Handle standard file input change
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleSelectedFile(e.target.files[0]);
+        }
+      });
+
+      // Helper function to read image file locally via FileReader
+      function handleSelectedFile(file) {
+        // Validate file type (PNG, JPG, JPEG)
+        const validTypes = ["image/png", "image/jpeg", "image/jpg"];
+        if (!validTypes.includes(file.type)) {
+          alert("Please upload a valid image file (PNG, JPG, or JPEG).");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          appState.uploadedImageSrc = evt.target.result;
+          imgPreview.src = evt.target.result;
+          previewBox.style.display = "block";
+          metaText.textContent = `File: ${file.name} | Size: ${(file.size / 1024).toFixed(1)} KB`;
+
+          // Beginner-friendly keyword matcher based on filename
+          guessProductFromText(file.name);
+
+          // Scroll preview into view
+          previewBox.scrollIntoView({ behavior: "smooth" });
+          showToast("Screenshot loaded! Review match below.");
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Sample screenshot buttons for easy demo without needing user files
+      sampleButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const sampleType = btn.getAttribute("data-sample");
+          loadSampleScreenshot(sampleType);
+        });
+      });
+
+      function loadSampleScreenshot(type) {
+        let sampleId = PRODUCTS[0].id;
+        let mockTitle = "Sample Irrigation Screenshot";
+        let mockColor = "#2d7a3e";
+
+        if (type === "rice") {
+          sampleId = "prod-14";
+          mockTitle = "Sample Organic Rice Screenshot";
+          mockColor = "#c98a1c";
+        } else if (type === "phone") {
+          sampleId = "prod-8";
+          mockTitle = "Sample Rugged Phone Screenshot";
+          mockColor = "#283593";
+        }
+
+        // Generate an inline SVG Data URL representing a mock shopping screenshot
+        const mockSvg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400">
+            <rect width="300" height="400" fill="#ffffff" rx="10"/>
+            <rect width="300" height="50" fill="${mockColor}"/>
+            <text x="150" y="32" fill="#ffffff" font-size="16" font-family="sans-serif" font-weight="bold" text-anchor="middle">Shopping App Deal</text>
+            <rect x="20" y="70" width="260" height="180" rx="8" fill="#f5f5f5" stroke="#e0e0e0"/>
+            <text x="150" y="165" fill="${mockColor}" font-size="18" font-family="sans-serif" font-weight="bold" text-anchor="middle">Product Photo</text>
+            <text x="25" y="280" fill="#1b4d24" font-size="15" font-family="sans-serif" font-weight="bold">${mockTitle}</text>
+            <text x="25" y="310" fill="#c0392b" font-size="20" font-family="sans-serif" font-weight="bold">Special Offer</text>
+            <rect x="20" y="335" width="260" height="40" rx="6" fill="#2d7a3e"/>
+            <text x="150" y="360" fill="#ffffff" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">Add to Cart</text>
+          </svg>
+        `;
+
+        const dataUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(mockSvg);
+        imgPreview.src = dataUrl;
+        previewBox.style.display = "block";
+        metaText.textContent = `Demo Screenshot: ${mockTitle} (Generated locally)`;
+
+        if (matchSelect) {
+          matchSelect.value = sampleId;
+        }
+
+        previewBox.scrollIntoView({ behavior: "smooth" });
+        showToast("Loaded sample screenshot!");
+      }
+
+      // Keyword guesser helper
+      function guessProductFromText(fileName) {
+        const lower = fileName.toLowerCase();
+        let matched = PRODUCTS[0];
+        PRODUCTS.forEach(p => {
+          const words = p.name.toLowerCase().split(" ");
+          words.forEach(w => {
+            if (w.length > 3 && lower.includes(w)) {
+              matched = p;
+            }
+          });
+        });
+        if (matchSelect) {
+          matchSelect.value = matched.id;
+        }
+      }
+
+      // Confirm match and jump to comparison table
+      if (confirmBtn) {
+        confirmBtn.addEventListener("click", () => {
+          const selectedId = matchSelect.value;
+          selectProductForCompare(selectedId);
+          showToast("Matched screenshot with catalog! Comparing seller costs...");
+        });
+      }
+    }
+
+    /* ==========================================================================
+       8. SEARCH & SEARCH VALIDATION
+       Implements case-insensitive keyword searching across products.
+       ========================================================================== */
+    function setupSearch() {
+      const input = document.getElementById("productSearchInput");
+      const searchBtn = document.getElementById("searchBtn");
+      const clearBtn = document.getElementById("clearSearchBtn");
+
+      if (!input || !searchBtn) return;
+
+      function performSearch() {
+        const query = input.value.trim();
+        if (query === "") {
+          showToast("Please enter a product name to search!");
+          input.focus();
+          return;
+        }
+
+        appState.searchQuery = query;
+        renderProductsGrid();
+
+        // Scroll to results
+        const trendingSec = document.getElementById("trending");
+        if (trendingSec) {
+          trendingSec.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+
+      searchBtn.addEventListener("click", performSearch);
+
+      // Trigger on Enter key
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          performSearch();
+        }
+      });
+
+      // Clear search
+      if (clearBtn) {
+        clearBtn.addEventListener("click", resetAllFilters);
+      }
+    }
+
+    function resetAllFilters() {
+      const input = document.getElementById("productSearchInput");
+      if (input) input.value = "";
+      appState.searchQuery = "";
+      appState.selectedCategory = "All";
+      renderCategoryCards();
+      renderProductsGrid();
+      showToast("Filters reset to show all items");
+    }
+
+    /* ==========================================================================
+       9. MODALS, TOASTS, & ACCESSIBILITY CONTROLS
+       ========================================================================== */
+    function setupModals() {
+      const modal = document.getElementById("infoModal");
+      const closeBtn = document.getElementById("modalCloseBtn");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalBody = document.getElementById("modalBody");
+
+      const linkAbout = document.getElementById("linkAboutUs");
+      const linkPrivacy = document.getElementById("linkPrivacy");
+      const linkContact = document.getElementById("linkContact");
+
+      function openModal(title, htmlContent) {
+        if (!modal) return;
+        modalTitle.textContent = title;
+        modalBody.innerHTML = htmlContent;
+        modal.classList.add("open");
+      }
+
+      function closeModal() {
+        if (modal) modal.classList.remove("open");
+      }
+
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      if (modal) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) closeModal();
+        });
+      }
+
+      // Escape key to close modal
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
+
+      // About Us link
+      if (linkAbout) {
+        linkAbout.addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal(
+            "About SmartPrice",
+            `
+            <p>SmartPrice is a modern price comparison platform crafted to bring total transparency to agricultural and daily consumer shopping.</p>
+            <p>Unlike commercial portals that rank sellers based on advertising kickbacks, our platform ranks sellers solely on verified <strong>Total Cost</strong> (Product Price + Shipping + Surcharges - Discounts).</p>
+            <p>Designed with large text, clean agricultural visuals, and accessible controls, it is built to serve rural households, farmers, and conscious shoppers.</p>
+            `
+          );
+        });
+      }
+
+      // Privacy & Disclaimers link
+      if (linkPrivacy) {
+        linkPrivacy.addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal(
+            "Privacy & Transparency Terms",
+            `
+            <p><strong>100% Client-Side Privacy:</strong> This demonstration platform does not transmit your personal search queries, screenshots, or device data to external cloud servers. All computations happen locally within your web browser.</p>
+            <p><strong>Demo Data Disclosure:</strong> All product prices, seller names, and historical trends are realistic mock representations created for educational and design demonstration.</p>
+            <p><strong>No Financial Guarantees:</strong> Our historical price analysis provides mathematical estimates, not binding price guarantees.</p>
+            `
+          );
+        });
+      }
+
+      // Contact link
+      if (linkContact) {
+        linkContact.addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal(
+            "Contact Community Support",
+            `
+            <p>Need assistance or have feedback on our transparent pricing tools?</p>
+            <p><strong>SmartPrice Support Desk</strong><br>
+            Email: <em>support@smartprice-demo.local</em><br>
+            Toll-Free Helpline: <em>1800-000-SMART</em> (Mon - Sat, 8 AM - 6 PM)</p>
+            <p>We welcome suggestions from agricultural cooperatives, consumer groups, and student developers.</p>
+            `
+          );
+        });
+      }
+    }
+
+    // Function called by "Select Deal" buttons in the table
+    window.showSellerModal = function(sellerName, totalCost) {
+      const modal = document.getElementById("infoModal");
+      const title = document.getElementById("modalTitle");
+      const body = document.getElementById("modalBody");
+      if (!modal) return;
+
+      title.textContent = `Deal Selected: ${sellerName}`;
+      body.innerHTML = `
+        <p>You have selected the deal from <strong>${sellerName}</strong> at a calculated total price of <strong>${totalCost}</strong>.</p>
+        <p>In a live marketplace integration, you would now be redirected to the seller's secure checkout page with the verified discount code automatically applied.</p>
+        <div style="background: var(--primary-tint); padding: 12px; border-radius: 8px; font-size: 0.9rem; color: var(--primary-dark); margin-top: 10px;">
+          ✓ Verified no hidden charges<br>
+          ✓ Delivery fee included in total<br>
+          ✓ Ready for safe checkout
+        </div>
+      `;
+      modal.classList.add("open");
+    };
+
+    // Toast notification helper
+    function showToast(message) {
+      const toast = document.getElementById("toastNotification");
+      const text = document.getElementById("toastMessage");
+      if (!toast || !text) return;
+
+      text.textContent = message;
+      toast.classList.add("show");
+
+      // Auto dismiss after 3.2 seconds
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3200);
+    }
+
+    // Mobile Menu Toggle
+    function setupMobileMenu() {
+      const btn = document.getElementById("mobileMenuBtn");
+      const menu = document.getElementById("navMenu");
+      if (!btn || !menu) return;
+
+      btn.addEventListener("click", () => {
+        menu.classList.toggle("mobile-open");
+      });
+
+      // Close menu when clicking any nav link
+      const links = menu.querySelectorAll("a");
+      links.forEach(l => {
+        l.addEventListener("click", () => {
+          menu.classList.remove("mobile-open");
+        });
+      });
+    }
+
+    // Accessibility Large Text Mode Toggle
+    function setupAccessibilityToggle() {
+      const btn = document.getElementById("toggleTextSizeBtn");
+      if (!btn) return;
+
+      btn.addEventListener("click", () => {
+        appState.largeTextEnabled = !appState.largeTextEnabled;
+        if (appState.largeTextEnabled) {
+          document.body.classList.add("large-text-mode");
+          btn.innerHTML = `<span>✓ Aa</span> Normal Text`;
+          showToast("Large text mode enabled for easy reading");
+        } else {
+          document.body.classList.remove("large-text-mode");
+          btn.innerHTML = `<span>Aa</span> Large Text`;
+          showToast("Standard text size restored");
+        }
+      });
+    }
+
+    // Hero Upload Button shortcut
+    function setupHeroShortcuts() {
+      const heroUploadBtn = document.getElementById("heroUploadBtn");
+      if (heroUploadBtn) {
+        heroUploadBtn.addEventListener("click", () => {
+          const uploadSec = document.getElementById("upload");
+          if (uploadSec) {
+            uploadSec.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      }
+    }
+
+    /* Helper function to find a product by ID */
+    function getProductById(id) {
+      return PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
+    }
+
+    /* XSS prevention helper for safe dynamic HTML interpolation */
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    /* ==========================================================================
+       10. APPLICATION INITIALIZATION (Runs when webpage loads)
+       ========================================================================== */
+    window.addEventListener("DOMContentLoaded", () => {
+      // 1. Render Categories
+      renderCategoryCards();
+
+      // 2. Render Products Grid
+      renderProductsGrid();
+
+      // 3. Populate Comparison controls and table
+      populateCompareDropdown();
+      renderComparisonTable();
+
+      // 4. Populate History controls and SVG Chart
+      populateHistoryDropdown();
+      renderPriceHistoryChart();
+
+      // 5. Setup Interactive Features
+      setupScreenshotUpload();
+      setupSearch();
+      setupModals();
+      setupMobileMenu();
+      setupAccessibilityToggle();
+      setupHeroShortcuts();
+
+      console.log("SmartPrice Platform initialized successfully. 100% offline ready.");
+    });
+  </script>
+</body>
+</html>
