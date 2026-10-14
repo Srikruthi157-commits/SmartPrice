@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FraudShield – Smart Message Fraud Detector</title>
+  <meta name="description" content="Beginner-friendly client-side tool to analyze SMS, WhatsApp, and emails for scams, phishing, and fraud indicators.">
+  <style>
+    /* ==========================================================================
+       1. CSS RESET & GLOBAL VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: rgba(99, 102, 241, 0.15);
+      
+      --risk-low: #10b981;
+      --risk-low-bg: rgba(16, 185, 129, 0.12);
+      --risk-low-border: rgba(16, 185, 129, 0.3);
+      
+      --risk-med: #f59e0b;
+      --risk-med-bg: rgba(245, 158, 11, 0.12);
+      --risk-med-border: rgba(245, 158, 11, 0.3);
+      
+      --risk-high: #ef4444;
+      --risk-high-bg: rgba(239, 68, 68, 0.14);
+      --risk-high-border: rgba(239, 68, 68, 0.35);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding: 0;
+    }
+
+    /* Container wrapper */
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 20px 60px 20px;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       2. HEADER & BRANDING
+       ========================================================================== */
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-top: 10px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .brand-title {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 800;
+      background: linear-gradient(to right, #ffffff, #c7d2fe, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      fill: #818cf8;
+      filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.5));
+    }
+
+    .tagline {
+      color: var(--text-muted);
+      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+      margin-top: 8px;
+      max-width: 640px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .privacy-notice {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 4px 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+
+    /* ==========================================================================
+       3. CARDS & LAYOUT
+       ========================================================================== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--card-hover);
+    }
+
+    /* Quick Examples Bar */
+    .examples-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .examples-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .examples-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .example-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #d1d5db;
+      font-size: 0.82rem;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .example-btn:hover {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Input Section */
+    .input-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .input-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .char-count {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .message-textarea {
+      width: 100%;
+      min-height: 150px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1.5px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: inherit;
+      font-size: 0.98rem;
+      color: var(--text-main);
+      resize: vertical;
+      outline: none;
+      transition: var(--transition);
+      line-height: 1.5;
+    }
+
+    .message-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .message-textarea::placeholder {
+      color: var(--text-dim);
+    }
+
+    .input-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.55);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .shortcut-hint {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      color: #d1d5db;
+    }
+
+    /* Validation Alert */
+    .validation-alert {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-top: 14px;
+      font-size: 0.9rem;
+      align-items: center;
+      gap: 10px;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    /* ==========================================================================
+       4. RESULTS SECTION
+       ========================================================================== */
+    .results-wrapper {
+      display: none;
+      animation: slideUp 0.35s ease-out forwards;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Result Header / Status */
+    .result-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px 24px;
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .result-banner.low {
+      background: var(--risk-low-bg);
+      border: 1.5px solid var(--risk-low-border);
+    }
+
+    .result-banner.medium {
+      background: var(--risk-med-bg);
+      border: 1.5px solid var(--risk-med-border);
+    }
+
+    .result-banner.high {
+      background: var(--risk-high-bg);
+      border: 1.5px solid var(--risk-high-border);
+    }
+
+    .result-info {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .result-category-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      margin-bottom: 4px;
+    }
+
+    .result-banner.low .result-category-label { color: var(--risk-low); }
+    .result-banner.medium .result-category-label { color: var(--risk-med); }
+    .result-banner.high .result-category-label { color: var(--risk-high); }
+
+    .result-category-title {
+      font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+      font-weight: 800;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .result-risk-level {
+      font-size: 0.95rem;
+      margin-top: 6px;
+      color: var(--text-muted);
+    }
+
+    /* Score Badge / Circular Meter */
+    .score-box {
+      text-align: center;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+      min-width: 130px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .score-number {
+      font-size: 2.3rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Risk Meter Progress Bar */
+    .meter-section {
+      margin-bottom: 24px;
+    }
+
+    .meter-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .meter-track {
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
+    }
+
+    .meter-fill.low {
+      background: linear-gradient(90deg, #10b981, #34d399);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+    }
+
+    .meter-fill.medium {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    }
+
+    .meter-fill.high {
+      background: linear-gradient(90deg, #ef4444, #f87171);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+    }
+
+    /* Indicators Grid */
+    .section-subtitle {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e5e7eb;
+    }
+
+    .indicators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .indicator-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .indicator-card.flagged {
+      border-left: 4px solid var(--risk-high);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .indicator-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .indicator-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+      color: #f3f4f6;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .points-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      white-space: nowrap;
+    }
+
+    .indicator-detail {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .indicator-match {
+      font-family: monospace;
+      font-size: 0.8rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #e0e7ff;
+      word-break: break-all;
+    }
+
+    /* Safe State Card */
+    .clean-state-card {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .clean-state-icon {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .clean-state-text h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #34d399;
+      margin-bottom: 4px;
+    }
+
+    .clean-state-text p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* Explanation & Recommendations */
+    .analysis-text-block {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .analysis-text-block p {
+      font-size: 0.93rem;
+      color: #d1d5db;
+      line-height: 1.6;
+    }
+
+    .recommendations-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .recommendation-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    .recommendation-icon {
+      font-size: 1.1rem;
+      line-height: 1.3;
+    }
+
+    /* Disclaimer box */
+    .disclaimer-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1f2937;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: var(--shadow-lg);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: var(--transition);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       5. EDUCATIONAL / GUIDE SECTION
+       ========================================================================== */
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .guide-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    .guide-card h4 {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e0e7ff;
+    }
+
+    .guide-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       6. FOOTER
+       ========================================================================== */
+    footer {
+      text-align: center;
+      padding: 24px 20px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(11, 15, 25, 0.8);
+    }
+
+    footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       7. RESPONSIVE DESIGN (Tablets & Mobile)
+       ========================================================================== */
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px 14px 40px 14px;
+      }
+
+      .card {
+        padding: 18px 14px;
+        border-radius: var(--radius-md);
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .btn-group {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .result-banner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .score-box {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+      }
+
+      .score-number {
+        font-size: 1.8rem;
+      }
+
+      .indicators-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- ======================================================================
+         HEADER & BRANDING
+         ====================================================================== -->
+    <header>
+      <div class="badge-pill">
+        <span>🛡️ Cyber Defense v1.0</span>
+      </div>
+      <h1 class="brand-title">
+        <svg class="brand-icon" viewBox="0 0 24 24">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-3.14 8.79-7 9.87-3.86-1.08-7-5.33-7-9.87V6.3l7-3.12zM12 6a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V7a1 1 0 0 0-1-1zm0 8a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z"/>
+        </svg>
+        FraudShield
+      </h1>
+      <p class="tagline">Smart Message Fraud Detector — Analyze SMS, WhatsApp, and emails for phishing patterns and scam indicators.</p>
+      <div>
+        <span class="privacy-notice">
+          <span>🔒 100% Client-Side & Private</span> — Your messages are analyzed locally and never leave your browser.
+        </span>
+      </div>
+    </header>
+
+    <!-- ======================================================================
+         QUICK TEST EXAMPLES BAR
+         ====================================================================== -->
+    <div class="examples-wrapper">
+      <div class="examples-label">
+        <span>⚡ Quick Test Examples (Click to test instantly):</span>
+      </div>
+      <div class="examples-grid">
+        <button class="example-btn" onclick="loadExample('bank')">
+          <span>🚨 Bank KYC Threat</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('lottery')">
+          <span>🎁 Fake Lottery Winner</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('job')">
+          <span>💼 Work-From-Home Scam</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('otp')">
+          <span>🔑 OTP Sharing Request</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('courier')">
+          <span>📦 Package Delivery Issue</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('college')">
+          <span>🎓 College Hackathon Notice</span>
+        </button>
+        <button class="example-btn" onclick="loadExample('friend')">
+          <span>💬 Chat from a Friend</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         INPUT SECTION
+         ====================================================================== -->
+    <main>
+      <div class="card">
+        <div class="input-header">
+          <label for="messageInput" class="input-title">
+            <span>📝 Enter Message to Analyze</span>
+          </label>
+          <span class="char-count" id="charCount">0 characters • 0 words</span>
+        </div>
+
+        <textarea 
+          id="messageInput" 
+          class="message-textarea" 
+          placeholder="Paste or type any suspicious SMS, WhatsApp message, email, or unverified link here... (e.g. 'Dear customer, your bank account is suspended. Click bit.ly/kyc to verify.')"
+          rows="5"
+        ></textarea>
+
+        <!-- Validation alert message for empty submission -->
+        <div id="validationAlert" class="validation-alert">
+          <span>⚠️</span>
+          <span>Please paste or type a message first so FraudShield can analyze it.</span>
+        </div>
+
+        <div class="input-actions">
+          <div class="btn-group">
+            <button id="analyzeBtn" class="btn btn-primary" onclick="analyzeCurrentMessage()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+              <span>Analyze Message</span>
+            </button>
+            <button id="clearBtn" class="btn btn-secondary" onclick="clearMessage()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+              <span>Clear</span>
+            </button>
+          </div>
+
+          <div class="shortcut-hint">
+            <span>💡 Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to analyze</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================================
+           RESULTS SECTION
+           ====================================================================== -->
+      <section id="resultsSection" class="results-wrapper">
+        <div class="card">
+          <!-- Status Banner -->
+          <div id="resultBanner" class="result-banner low">
+            <div class="result-info">
+              <div id="resultCategoryLabel" class="result-category-label">Classification</div>
+              <div id="resultCategoryTitle" class="result-category-title">
+                <span id="resultIcon">🟢</span>
+                <span id="resultCategory">Likely Genuine</span>
+              </div>
+              <div id="resultRiskLevel" class="result-risk-level">Risk Level: Low Risk (0–29)</div>
+            </div>
+
+            <!-- Risk Score Display -->
+            <div class="score-box">
+              <div id="scoreNumber" class="score-number">0</div>
+              <div class="score-label">Risk Score / 100</div>
+            </div>
+          </div>
+
+          <!-- Progress Bar Meter -->
+          <div class="meter-section">
+            <div class="meter-labels">
+              <span>Risk Meter</span>
+              <span id="meterPercentText">0% Risk</span>
+            </div>
+            <div class="meter-track">
+              <div id="meterFill" class="meter-fill low" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Detected Indicators -->
+          <div class="section-subtitle">
+            <span>🔍 Detected Warning Signs & Indicators</span>
+          </div>
+
+          <div id="indicatorsContainer">
+            <!-- Dynamic indicator chips or clean state rendered here -->
+          </div>
+
+          <!-- Plain-English Explanation -->
+          <div class="section-subtitle">
+            <span>💬 Why was this message flagged?</span>
+          </div>
+          <div class="analysis-text-block">
+            <p id="analysisExplanation">
+              No obvious fraud indicators detected.
+            </p>
+          </div>
+
+          <!-- Practical Safety Recommendations -->
+          <div class="section-subtitle">
+            <span>🛡️ Practical Safety Recommendations</span>
+          </div>
+          <ul id="recommendationsList" class="recommendations-list">
+            <!-- Dynamic safety items -->
+          </ul>
+
+          <!-- Disclaimer -->
+          <div class="disclaimer-box">
+            <span>ℹ️</span>
+            <div>
+              <strong>Important Disclaimer:</strong> FraudShield provides an estimated risk assessment using rule-based pattern matching. A "Likely Genuine" status does not guarantee that a message is authentic, as new scam patterns emerge daily. Always verify unexpected or sensitive requests through official channels.
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="report-actions">
+            <button class="btn btn-secondary" onclick="copyAnalysisReport()">
+              <span>📋 Copy Risk Report</span>
+            </button>
+            <button class="btn btn-secondary" onclick="resetToNewAnalysis()">
+              <span>🔄 Test Another Message</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================================
+           HOW FRAUDSHIELD WORKS (EDUCATIONAL GUIDE)
+           ====================================================================== -->
+      <section class="card">
+        <h3 class="section-subtitle">
+          <span>🧠 How FraudShield Calculates Risk (For Hackathon & Demo)</span>
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 14px;">
+          FraudShield uses an intelligent client-side rule evaluation engine. It examines the message across 10 security vectors, computes weighted penalty scores, and classifies the message into standardized risk tiers:
+        </p>
+
+        <div class="guide-grid">
+          <div class="guide-card">
+            <h4>🟢 Low Risk (0–29)</h4>
+            <p><strong>Likely Genuine:</strong> Normal conversational, informational, or transactional messages without aggressive threats, credential harvesting, or deceptive links.</p>
+          </div>
+
+          <div class="guide-card">
+            <h4>🟡 Medium Risk (30–59)</h4>
+            <p><strong>Suspicious – Needs Verification:</strong> Contains warning flags such as unfamiliar links, generic courier notices, or vague financial claims that warrant careful verification.</p>
+          </div>
+
+          <div class="guide-card">
+            <h4>🔴 High Risk (60–100)</h4>
+            <p><strong>Likely Fraud:</strong> Exhibits severe scam indicators such as account block threats, OTP/PIN requests, fake lotteries, high pressure, or malicious APK downloads.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Toast message for copy confirmation -->
+    <div id="toast" class="toast">
+      <span>✅</span>
+      <span id="toastMessage">Report copied to clipboard!</span>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       FOOTER
+       ========================================================================== -->
+  <footer>
+    <p>
+      <strong>FraudShield</strong> – Smart Message Fraud Detector &bull; Built with HTML, CSS, and Vanilla JavaScript &bull; Free & Open-Source
+    </p>
+    <p style="margin-top: 6px; font-size: 0.8rem;">
+      Designed for College Hackathons, First-Year Projects, and Cybersecurity Awareness.
+    </p>
+  </footer>
+
+  <!-- ==========================================================================
+       JAVASCRIPT: FRAUD DETECTION ENGINE & DOM LOGIC
+       ========================================================================== -->
+  <script>
+    /**
+     * ============================================================================
+     * FraudShield – Smart Message Fraud Detector
+     * ============================================================================
+     * 
+     * HOW THE ENGINE WORKS:
+     * 1. The user inputs text (SMS, WhatsApp, Email, Link).
+     * 2. The text is normalized (trimmed, converted to lower case for keyword matching).
+     * 3. The engine evaluates 10 distinct security rule categories.
+     * 4. Each category has:
+     *    - A unique ID (ensuring no pattern is counted multiple times).
+     *    - A regex pattern detecting specific scam tactics.
+     *    - A weighted risk score (10 to 35 points based on severity).
+     *    - Human-readable explanation and tailored safety recommendation.
+     * 5. The risk scores from all triggered rules are summed (capped between 0 and 100).
+     * 6. The overall score determines the classification:
+     *    - 0 to 29: Low Risk -> Likely Genuine
+     *    - 30 to 59: Medium Risk -> Suspicious – Needs Verification
+     *    - 60 to 100: High Risk -> Likely Fraud
+     * 7. The results, progress meter, indicators, and recommendations are dynamically
+     *    rendered into the DOM.
+     * ============================================================================
+     */
+
+    // --- PRE-LOADED TEST EXAMPLES FOR INSTANT DEMO ---
+    const TEST_EXAMPLES = {
+      bank: "Dear Customer, your SBI account has been SUSPENDED due to pending KYC verification. Please click http://bit.ly/sbi-kyc-verify immediately to update your PAN card or your account will be permanently blocked within 24 hours.",
+      lottery: "CONGRATULATIONS! You have been selected as the 1st prize winner of $1,000,000 in the International Mega Lottery Draw! To claim your cash prize, send a $50 processing fee via wire transfer immediately.",
+      job: "Exclusive Part-Time Work From Home Offer! Earn $500 to $1,500 daily by simply liking YouTube videos. 100% guaranteed returns with zero risk. Contact our Telegram executive now to register with a small refundable deposit.",
+      otp: "URGENT SECURITY ALERT: We have detected an unauthorized login to your account. To prevent immediate deactivation, please reply and share the 6-digit OTP code sent to your mobile phone right now.",
+      courier: "Your package delivery by India Post could not be completed because your house address is incomplete. Please visit http://track-parcel-update.xyz to confirm your address and reschedule delivery within 48 hours.",
+      college: "Reminder: The Hackathon project submission portal will close tomorrow at 5:00 PM. Please make sure your team repository link and final report are uploaded on the official college intranet.",
+      friend: "Hey! Are you still coming to the library after the 2 PM computer networks lecture? Let me know so I can save a seat for you."
+    };
+
+    // --- RULE DEFINITIONS FOR FRAUD DETECTION ---
+    // Each rule checks for a specific scam vector with a weighted point value.
+    const FRAUD_RULES = [
+      {
+        id: "credential_harvesting",
+        title: "Credential & OTP Harvesting",
+        icon: "🔑",
+        points: 35,
+        // Detects requests for OTP, PIN, Password, CVV, Card numbers, sensitive codes
+        regex: /(?:share|send|enter|verify|provide|forward|confirm|submit|reply\s+with)\s+(?:[\w-]+\s+){0,4}(?:otp|one\s*time\s*password|pin|atm\s*pin|password|cvv|security\s*code|card\s*details|bank\s*details|credentials)|(?:otp|one\s*time\s*password|verification\s*code|security\s*code)\s+(?:code\s+)?sent\s+to/i,
+        explanation: "The message asks you to share highly sensitive credentials (such as an OTP, PIN, password, or CVV).",
+        recommendation: "Never share an OTP or PIN with anyone. Banks, government officials, and reputable organizations will NEVER ask for your OTP or password over SMS or call."
+      },
+      {
+        id: "account_suspension",
+        title: "Account Suspension / KYC Threat",
+        icon: "🚨",
+        points: 30,
+        // Detects threats that an account/card/service is blocked, suspended, or KYC expired
+        regex: /(?:account|debit\s*card|credit\s*card|sim\s*card|netbanking|ebanking|wallet)\s+(?:[\w-]+\s+){0,3}(?:blocked|suspended|deactivated|frozen|terminated|locked)|(?:kyc|pan\s*card|aadhaar)\s+(?:[\w-]+\s+){0,3}(?:expired|pending|suspended|mandatory|update|verification|blocked)|(?:prevent|avoid)\s+(?:immediate\s+)?(?:deactivation|suspension|blocking)|(?:unauthorized\s+login)/i,
+        explanation: "The message creates false panic claiming your bank account, KYC, or card is blocked, suspended, or compromised.",
+        recommendation: "Do not panic or click any links in the message. Log in directly to your official banking app or visit your local branch to verify your account status."
+      },
+      {
+        id: "urgent_pressure",
+        title: "Urgent Time Pressure / Panic Trap",
+        icon: "⏱️",
+        points: 20,
+        // Detects artificial deadlines designed to prevent critical thinking
+        regex: /(?:within\s*(?:24|12|6|2|1)\s*(?:hours?|hrs?)|within\s*\d+\s*(?:mins?|minutes?)|immediately|urgently|right\s*now|act\s*fast|without\s*delay|action\s*required)/i,
+        explanation: "The message imposes tight deadlines or urgent demands to force quick, uncalculated actions.",
+        recommendation: "Pause and take your time. Fraudsters rely on artificial panic to prevent victims from independently verifying information."
+      },
+      {
+        id: "urgent_money_transfer",
+        title: "Urgent Money Transfer / Wire Request",
+        icon: "💸",
+        points: 25,
+        // Detects pressure to wire, transfer, or pay money urgently
+        regex: /(?:urgent|immediately|urgently|right\s*now|instantly).*(?:transfer|send\s*money|pay|wire|deposit|remit|upi)|(?:transfer|send\s*money|pay\s*now).*(?:immediately|urgently|right\s*now|wire)/i,
+        explanation: "The message demands immediate financial transfer or payment.",
+        recommendation: "Never transfer money under pressure. Verify the recipient identity through trusted offline channels."
+      },
+      {
+        id: "fake_lottery_prize",
+        title: "Fake Lottery, Prize & Giveaway",
+        icon: "🎁",
+        points: 30,
+        // Detects claims of winning un-entered lotteries, jackpots, or free gifts
+        regex: /(?:congratulations|congrats|lucky\s*winner|you\s*have\s*won|selected\s*as\s*(?:the\s*)?winner|won\s*(?:a\s*)?lottery|cash\s*prize|jackpot|free\s*gift|won\s*[\$₹€£]\s*\d+|won\s*\d+\s*(?:crore|lakh|million|dollars|rupees)|claim\s*your\s*(?:prize|reward|gift|iphone))/i,
+        explanation: "The message claims you won money, a lottery, or a luxury prize from an event you never participated in.",
+        recommendation: "You cannot win a contest or lottery you never entered. Delete the message and never transfer money to 'claim' a supposed prize."
+      },
+      {
+        id: "investment_job_scam",
+        title: "Unrealistic Investment / Job Scam",
+        icon: "💼",
+        points: 25,
+        // Detects too-good-to-be-true earnings, daily income, task scams
+        regex: /(?:guaranteed\s*returns?|double\s*your\s*(?:money|investment)|100%\s*risk[- ]?free|daily\s*income|earn\s*[\$₹€£]\s*\d+\s*daily|earn\s*up\s*to\s*\d+\s*(?:per\s*day|daily)|part[- ]?time\s*(?:job|work).*earn|like\s*(?:youtube|tiktok|instagram)\s*videos.*earn|crypto\s*investment\s*profit)/i,
+        explanation: "The message promises guaranteed returns, easy money for simple tasks, or unrealistic daily work-from-home earnings.",
+        recommendation: "High returns with zero risk do not exist. Legitimate employers will never ask for deposits or pay for liking social media posts."
+      },
+      {
+        id: "advance_fee_fraud",
+        title: "Advance Fee / Processing Charge",
+        icon: "💰",
+        points: 25,
+        // Detects requests for registration fee, processing fee, security deposit
+        regex: /(?:registration|processing|clearance|security|refundable|advance)\s*(?:fee|charge|deposit)|(?:pay|send|wire).*(?:processing|registration|refundable|advance)/i,
+        explanation: "The message asks you to pay an advance fee, security deposit, or processing charge before receiving money or starting a job.",
+        recommendation: "Never pay upfront fees to claim money or start a job. This is a classic 'advance-fee fraud' tactic."
+      },
+      {
+        id: "unverified_channel",
+        title: "Unverified Chat / Channel Recruiter",
+        icon: "💬",
+        points: 15,
+        // Detects Telegram/WhatsApp recruitment traps
+        regex: /(?:telegram|whatsapp)\s*(?:executive|admin|manager|channel|support|contact|representative|agent)/i,
+        explanation: "The message directs you to contact an unknown person on Telegram or WhatsApp for money or work.",
+        recommendation: "Reputable businesses and hiring firms do not hire or pay candidates through anonymous Telegram or WhatsApp channels."
+      },
+      {
+        id: "suspicious_short_url",
+        title: "Suspicious Link / URL Shortener",
+        icon: "🔗",
+        points: 25,
+        // Detects URL shorteners or strange domains commonly used to mask malicious sites
+        regex: /(?:https?:\/\/)?(?:bit\.ly|tinyurl\.com|is\.gd|t\.co|rb\.gy|cutt\.ly|ow\.ly|shorturl\.at|tiny\.cc)\/[a-zA-Z0-9_\-]+|\b(?:https?:\/\/)?[a-zA-Z0-9\-]+\.(?:xyz|top|buzz|click|club|link|loan|work|fit|gq|ml|cf|tk|rest|cam)\b|\bhttps?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/i,
+        explanation: "The message contains a shortened URL or an unfamiliar suspicious domain hiding the real destination.",
+        recommendation: "Do not tap on shortened links. If a bank or service claims to have sent a link, navigate directly to their official website instead."
+      },
+      {
+        id: "coercive_click",
+        title: "Immediate Click Coercion",
+        icon: "👆",
+        points: 15,
+        // Detects pressure to tap or click a link right away
+        regex: /(?:click|tap|visit|open)\s+(?:[\w-:\/.]+\s+){0,3}(?:immediately|urgently|now|before|to\s*avoid|within)/i,
+        explanation: "The message tries to pressure you into clicking a link immediately with an artificial countdown or threat.",
+        recommendation: "Avoid reflexive clicking. Inspect the sender's details and check if the communication aligns with standard official policies."
+      },
+      {
+        id: "impersonation_authority",
+        title: "Authority / Brand Impersonation",
+        icon: "🏛️",
+        points: 20,
+        // Detects impersonation of couriers, tax offices, police, customs
+        regex: /(?:parcel|package|courier|delivery|fedex|dhl|ups|india\s*post|speed\s*post|usps).*(?:failed|undelivered|reschedule|incomplete|address|customs)|(?:income\s*tax\s*department|irs|customs\s*department|cbi|rbi\s*notice|cyber\s*crime\s*police|arrest\s*warrant|court\s*notice)/i,
+        explanation: "The message pretends to be from a postal service, law enforcement agency, or government department.",
+        recommendation: "Official departments do not issue arrest warrants or demand immediate payment over text messages. Check parcel status directly on the carrier's verified app."
+      },
+      {
+        id: "malware_apk_remote",
+        title: "Malicious APK / Remote Tool Request",
+        icon: "📱",
+        points: 35,
+        // Detects instructions to download APKs or remote control apps
+        regex: /(?:download|install)\s+(?:[\w-]+\s+){0,2}(?:app|application|\.apk|apk\s*file|anydesk|teamviewer|quicksupport|rustdesk|remote\s*access)/i,
+        explanation: "The message asks you to download an unknown APK file or install remote desktop software (like AnyDesk or QuickSupport).",
+        recommendation: "NEVER install unknown APK files or screen-sharing tools requested by someone via text. They grant complete remote control over your phone and banking apps."
+      }
+    ];
+
+    // --- DOM ELEMENT REFERENCES ---
+    const messageInput = document.getElementById("messageInput");
+    const charCountEl = document.getElementById("charCount");
+    const validationAlert = document.getElementById("validationAlert");
+    const resultsSection = document.getElementById("resultsSection");
+    
+    const resultBanner = document.getElementById("resultBanner");
+    const resultCategoryTitle = document.getElementById("resultCategoryTitle");
+    const resultCategory = document.getElementById("resultCategory");
+    const resultCategoryLabel = document.getElementById("resultCategoryLabel");
+    const resultRiskLevel = document.getElementById("resultRiskLevel");
+    const resultIcon = document.getElementById("resultIcon");
+    
+    const scoreNumber = document.getElementById("scoreNumber");
+    const meterPercentText = document.getElementById("meterPercentText");
+    const meterFill = document.getElementById("meterFill");
+    
+    const indicatorsContainer = document.getElementById("indicatorsContainer");
+    const analysisExplanation = document.getElementById("analysisExplanation");
+    const recommendationsList = document.getElementById("recommendationsList");
+    const toast = document.getElementById("toast");
+    const toastMessage = document.getElementById("toastMessage");
+
+    // Track latest analysis result for the "Copy Report" function
+    let currentAnalysisReport = null;
+
+    /**
+     * Update live character & word count as the user types.
+     */
+    function updateCharCount() {
+      const text = messageInput.value.trim();
+      const chars = messageInput.value.length;
+      const words = text.length === 0 ? 0 : text.split(/\s+/).length;
+      charCountEl.textContent = `${chars} characters • ${words} words`;
+    }
+
+    messageInput.addEventListener("input", () => {
+      updateCharCount();
+      // Hide validation alert as soon as user types
+      if (messageInput.value.trim().length > 0) {
+        validationAlert.style.display = "none";
+      }
+    });
+
+    /**
+     * Keyboard shortcut: Ctrl + Enter (or Cmd + Enter on Mac) to run analysis.
+     */
+    messageInput.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        analyzeCurrentMessage();
+      }
+    });
+
+    /**
+     * Load a pre-defined test example into the textarea.
+     * @param {string} key - The example key from TEST_EXAMPLES
+     */
+    function loadExample(key) {
+      if (TEST_EXAMPLES[key]) {
+        messageInput.value = TEST_EXAMPLES[key];
+        updateCharCount();
+        validationAlert.style.display = "none";
+        analyzeCurrentMessage();
+      }
+    }
+
+    /**
+     * Clear the input textarea and reset the interface.
+     */
+    function clearMessage() {
+      messageInput.value = "";
+      updateCharCount();
+      validationAlert.style.display = "none";
+      resultsSection.style.display = "none";
+      currentAnalysisReport = null;
+      messageInput.focus();
+    }
+
+    /**
+     * Core Detection Engine:
+     * Analyzes input string and returns risk assessment metrics.
+     * @param {string} message - Raw message text
+     * @returns {Object} Analysis outcome with score, category, matches, recommendations
+     */
+    function evaluateMessage(message) {
+      const trimmed = message.trim();
+      const detectedRules = [];
+      let totalPoints = 0;
+
+      // Evaluate each rule against the message
+      FRAUD_RULES.forEach((rule) => {
+        // Test regex pattern
+        const match = trimmed.match(rule.regex);
+        if (match) {
+          // Each rule triggers at most once (avoiding duplicated point counting)
+          detectedRules.push({
+            id: rule.id,
+            title: rule.title,
+            icon: rule.icon,
+            points: rule.points,
+            explanation: rule.explanation,
+            recommendation: rule.recommendation,
+            snippet: match[0] // Captured trigger snippet
+          });
+          totalPoints += rule.points;
+        }
+      });
+
+      // Special check: detect generic URL if no specific shortener rule triggered
+      const hasGenericUrl = /https?:\/\/[^\s]+/i.test(trimmed);
+      const alreadyHasLinkRule = detectedRules.some((r) => r.id === "suspicious_short_url");
+      if (hasGenericUrl && !alreadyHasLinkRule) {
+        const urlMatch = trimmed.match(/https?:\/\/[^\s]+/i);
+        detectedRules.push({
+          id: "generic_link",
+          title: "Embedded Web Link Detected",
+          icon: "🌐",
+          points: 15,
+          explanation: "The message contains a direct web address. Fraudulent messages often use links to direct victims to phishing pages.",
+          recommendation: "Always inspect URLs thoroughly before clicking. Do not enter credentials on unfamiliar sites.",
+          snippet: urlMatch ? urlMatch[0] : "URL detected"
+        });
+        totalPoints += 15;
+      }
+
+      // Bound final score strictly between 0 and 100
+      const finalScore = Math.min(100, Math.max(0, totalPoints));
+
+      // Determine classification according to specified project thresholds:
+      // 0–29: Low Risk (Likely Genuine)
+      // 30–59: Medium Risk (Suspicious – Needs Verification)
+      // 60–100: High Risk (Likely Fraud)
+      let category = "";
+      let riskLevel = "";
+      let severityClass = "";
+      let icon = "";
+
+      if (finalScore >= 60) {
+        category = "Likely Fraud";
+        riskLevel = "High Risk (60–100)";
+        severityClass = "high";
+        icon = "🚨";
+      } else if (finalScore >= 30) {
+        category = "Suspicious – Needs Verification";
+        riskLevel = "Medium Risk (30–59)";
+        severityClass = "medium";
+        icon = "⚠️";
+      } else {
+        category = "Likely Genuine";
+        riskLevel = "Low Risk (0–29)";
+        severityClass = "low";
+        icon = "🟢";
+      }
+
+      return {
+        score: finalScore,
+        category: category,
+        riskLevel: riskLevel,
+        severityClass: severityClass,
+        icon: icon,
+        detectedRules: detectedRules,
+        rawText: trimmed
+      };
+    }
+
+    /**
+     * Main handler triggered by "Analyze Message" button or Ctrl+Enter.
+     */
+    function analyzeCurrentMessage() {
+      const text = messageInput.value.trim();
+
+      // Requirement 10: Friendly validation for empty message
+      if (!text) {
+        validationAlert.style.display = "flex";
+        resultsSection.style.display = "none";
+        messageInput.focus();
+        return;
+      }
+
+      validationAlert.style.display = "none";
+
+      // Execute rule-based analysis
+      const result = evaluateMessage(text);
+      currentAnalysisReport = result;
+
+      // Render the results into UI
+      renderResults(result);
+    }
+
+    /**
+     * Render the analysis outcome into the DOM.
+     * @param {Object} result - Analysis outcome from evaluateMessage
+     */
+    function renderResults(result) {
+      // 1. Update Result Banner and Category
+      resultBanner.className = `result-banner ${result.severityClass}`;
+      resultCategory.textContent = result.category;
+      resultIcon.textContent = result.icon;
+      resultRiskLevel.textContent = `Risk Level: ${result.riskLevel}`;
+      scoreNumber.textContent = result.score;
+      meterPercentText.textContent = `${result.score}% Risk Score`;
+
+      // 2. Animate Risk Meter Fill Bar
+      meterFill.className = `meter-fill ${result.severityClass}`;
+      // Allow slight browser reflow for CSS transition animation
+      meterFill.style.width = "0%";
+      setTimeout(() => {
+        meterFill.style.width = `${result.score}%`;
+      }, 50);
+
+      // 3. Render Detected Indicators
+      indicatorsContainer.innerHTML = "";
+
+      if (result.detectedRules.length === 0) {
+        // Requirement 11: Display neutral result explaining absence of signs != proof of authenticity
+        indicatorsContainer.innerHTML = `
+          <div class="clean-state-card">
+            <div class="clean-state-icon">🛡️</div>
+            <div class="clean-state-text">
+              <h4>No Obvious Fraud Indicators Detected</h4>
+              <p>The message does not contain typical scam keywords, urgency traps, or suspicious link patterns evaluated by our rules. However, please remember that the absence of detected warning signs does not conclusively prove the message is genuine.</p>
+            </div>
+          </div>
+        `;
+      } else {
+        const grid = document.createElement("div");
+        grid.className = "indicators-grid";
+
+        result.detectedRules.forEach((rule) => {
+          const card = document.createElement("div");
+          card.className = "indicator-card flagged";
+          card.innerHTML = `
+            <div class="indicator-top">
+              <span class="indicator-name">
+                <span>${rule.icon}</span>
+                <span>${rule.title}</span>
+              </span>
+              <span class="points-pill">+${rule.points} pts</span>
+            </div>
+            <p class="indicator-detail">${rule.explanation}</p>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-dim);">Trigger match:</span>
+              <span class="indicator-match">"${escapeHtml(rule.snippet)}"</span>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        indicatorsContainer.appendChild(grid);
+      }
+
+      // 4. Render Plain-English Explanation
+      if (result.detectedRules.length === 0) {
+        analysisExplanation.textContent = 
+          "This message contains standard conversational, informational, or transactional wording. No known high-risk scam indicators or urgency mechanisms were matched. While this suggests a low probability of fraud, always remain vigilant with unfamiliar senders.";
+      } else {
+        const flagNames = result.detectedRules.map(r => r.title).join(", ");
+        if (result.score >= 60) {
+          analysisExplanation.textContent = 
+            `This message was flagged as High Risk because it contains critical fraud signals (${flagNames}). Scammers commonly use this combination of tactics to panic victims into parting with money or disclosing sensitive security credentials.`;
+        } else {
+          analysisExplanation.textContent = 
+            `This message was flagged as Suspicious because it contains one or more notable warning flags (${flagNames}). While it may not yet be confirmed fraud, it warrants cautious verification before you respond or click any embedded links.`;
+        }
+      }
+
+      // 5. Render Practical Safety Recommendations
+      recommendationsList.innerHTML = "";
+
+      const recommendations = [];
+
+      // Collect specific recommendations based on matched rules
+      result.detectedRules.forEach((rule) => {
+        if (!recommendations.includes(rule.recommendation)) {
+          recommendations.push(rule.recommendation);
+        }
+      });
+
+      // Default safety practices
+      if (recommendations.length === 0) {
+        recommendations.push("Even with low-risk messages, do not share financial details unless you have independently verified the sender.");
+        recommendations.push("If a message claims to be from your college or bank, verify directly via their official app or website.");
+      } else {
+        recommendations.push("Never click links or download attachments sent by unverified contacts or unknown numbers.");
+        recommendations.push("When in doubt, contact the organization directly using a phone number from their official website, not the number in the SMS.");
+      }
+
+      recommendations.forEach((rec) => {
+        const li = document.createElement("li");
+        li.className = "recommendation-item";
+        li.innerHTML = `
+          <span class="recommendation-icon">🛡️</span>
+          <span>${rec}</span>
+        `;
+        recommendationsList.appendChild(li);
+      });
+
+      // 6. Make Results Section Visible & Scroll Smoothly
+      resultsSection.style.display = "block";
+      resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    /**
+     * Copy a formatted summary report to clipboard for demonstration / sharing.
+     */
+    function copyAnalysisReport() {
+      if (!currentAnalysisReport) return;
+
+      const report = [
+        "══════════════════════════════════════════════",
+        "  FRAUDSHIELD – MESSAGE RISK ASSESSMENT REPORT",
+        "══════════════════════════════════════════════",
+        `Category:    ${currentAnalysisReport.category}`,
+        `Risk Score:  ${currentAnalysisReport.score} / 100`,
+        `Risk Level:  ${currentAnalysisReport.riskLevel}`,
+        "──────────────────────────────────────────────",
+        `Detected Indicators (${currentAnalysisReport.detectedRules.length}):`,
+        currentAnalysisReport.detectedRules.length === 0 
+          ? "  • No obvious scam indicators detected."
+          : currentAnalysisReport.detectedRules.map(r => `  • [${r.title}] (+${r.points} pts) -> "${r.snippet}"`).join("\n"),
+        "──────────────────────────────────────────────",
+        "Sample Message Analyzed:",
+        `"${currentAnalysisReport.rawText.substring(0, 160)}${currentAnalysisReport.rawText.length > 160 ? '...' : ''}"`,
+        "──────────────────────────────────────────────",
+        "Note: Estimated rule-based assessment for awareness purposes.",
+        "FraudShield – Smart Message Fraud Detector (100% Client-Side)",
+        "══════════════════════════════════════════════"
+      ].join("\n");
+
+      // Clipboard API with fallback for local browser compatibility
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(report).then(() => {
+          showToast("Analysis report copied to clipboard!");
+        }).catch(() => {
+          fallbackCopyText(report);
+        });
+      } else {
+        fallbackCopyText(report);
+      }
+    }
+
+    /**
+     * Fallback copy helper for non-HTTPS or legacy contexts.
+     * @param {string} text - Text to copy
+     */
+    function fallbackCopyText(text) {
+      const tempTextArea = document.createElement("textarea");
+      tempTextArea.value = text;
+      tempTextArea.style.position = "fixed";
+      tempTextArea.style.left = "-9999px";
+      document.body.appendChild(tempTextArea);
+      tempTextArea.focus();
+      tempTextArea.select();
+      try {
+        document.execCommand("copy");
+        showToast("Analysis report copied to clipboard!");
+      } catch (err) {
+        showToast("Could not copy report. Please copy manually.");
+      }
+      document.body.removeChild(tempTextArea);
+    }
+
+    /**
+     * Show a temporary toast notification.
+     * @param {string} msg - Message to show in toast
+     */
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+    }
+
+    /**
+     * Reset and focus for another message analysis.
+     */
+    function resetToNewAnalysis() {
+      messageInput.focus();
+      messageInput.select();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    /**
+     * Helper to safely escape HTML special characters.
+     * @param {string} str - Raw string
+     * @returns {string} Escaped string
+     */
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Initialize character counter on page load
+    updateCharCount();
+  </script>
+</body>
+</html>
